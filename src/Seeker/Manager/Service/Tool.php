@@ -6,7 +6,7 @@ use Seeker\Sharded;
 use Seeker\Manager\NodeClient;
 use Seeker\Protocol\Error;
 
-class Deploy extends AuthedAndTool
+class Tool extends AuthedAndTool
 {
     //节点认证
     public function push()

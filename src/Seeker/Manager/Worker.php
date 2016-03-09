@@ -23,7 +23,7 @@ class Worker extends TcpWorker
                 'response' => 'Seeker\\Protocol\\Base'
             ],
             'tool.deploy.push' => [
-                'service' => 'Seeker\\Manager\\Service\\Deploy:push',
+                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
                 'request' => 'Seeker\\Protocol\\Json',
                 'response' => 'Seeker\\Protocol\\Base'
             ],
@@ -34,6 +34,11 @@ class Worker extends TcpWorker
             ],
             'common.event_listen.remove' => [
                 'service' => 'Seeker\\Service\\Common\\EventListen:remove',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base'
+            ],
+            'node.deploy.progress' => [
+                'service' => 'Seeker\\Manager\\Service\\Deploy:progress',
                 'request' => 'Seeker\\Protocol\\Json',
                 'response' => 'Seeker\\Protocol\\Base'
             ]
