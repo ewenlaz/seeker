@@ -9,15 +9,30 @@ class TcpConnection implements ConnectionInterface
     protected $client = null;
     protected $host = '';
     protected $port = 0;
-    public function __construct($host = '', $port = 0)
+    protected $authed = 0;
+
+
+    public function __construct($host = '', $port = 0, $option = [])
     {
         $this->client = new Client(SWOOLE_SOCK_TCP, SWOOLE_SOCK_ASYNC);
+        $this->client->set($option);
         $this->client->on('connect', [$this, 'onSwooleConnect']);
         $this->client->on('close', [$this, 'onSwooleClose']);
         $this->client->on('receive', [$this, 'onSwooleReceive']);
         $this->client->on('error', [$this, 'onSwooleError']);
         $this->host = $host;
         $this->port = $port;
+    }
+
+    public function setAuthed($flag)
+    {
+        $this->authed = $flag;
+        return $this;
+    }
+
+    public function getAuthed()
+    {
+        return $this->authed;
     }
 
     public function connect()

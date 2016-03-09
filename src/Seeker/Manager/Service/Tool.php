@@ -5,11 +5,12 @@ namespace Seeker\Manager\Service;
 use Seeker\Sharded;
 use Seeker\Manager\NodeClient;
 use Seeker\Protocol\Error;
+use Seeker\Service\Base;
 
-class Tool extends AuthedAndTool
+class Tool extends Base
 {
     //节点认证
-    public function push()
+    public function deployPush()
     {
         //找到相应的Node...
         $nodeId = $this->request->get('nodeId');
@@ -28,14 +29,5 @@ class Tool extends AuthedAndTool
             $pushReq->sendTo($node);
         }
         $this->connection->send($this->response);
-    }
-
-    public function pushResponse()
-    {
-        if ($this->request->getCode() !== 0) {
-            //$this->connection->close(); //发送失败。
-        } else {
-            //发送成功
-        }
     }
 }

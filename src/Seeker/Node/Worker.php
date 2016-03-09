@@ -28,7 +28,13 @@ class Worker extends TcpWorker
                 'response' => 'Seeker\\Protocol\\Base'
             ]
         ]);
-
+        
+        $this->dispatcher->remoteCalls([
+            'node.deploy.progress' => [
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base'
+            ]
+        ]);
     }
 
     public function onReceive($id, $data)

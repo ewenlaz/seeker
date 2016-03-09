@@ -3,10 +3,12 @@
 
 include 'autoload.php';
 
+use Seeker\Standard\ConnectionInterface;
+
 
 $settings = [
     'auth_keys' => [
-        'tool' => 'ab2cd'
+        'tool' => ConnectionInterface::AUTHED_COMMON | ConnectionInterface::AUTHED_TOOL
     ]
 ];
 

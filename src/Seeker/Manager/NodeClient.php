@@ -35,8 +35,7 @@ class NodeClient extends TcpConnection
             ->set('type', 'manager')
             ->set('auth_key', $this->authKey)
             ->then(function($connection, $response) {
-                echo $response;
-                $connection->isAuth = true;
+                $connection->setAuthed(static::AUTHED_COMMON | static::AUTHED_NODE);
             })
             ->sendTo($this);
     }

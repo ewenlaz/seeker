@@ -58,7 +58,7 @@ $client->on("connect", function(Swoole\Client $cli) {
     echo 'on connect' . PHP_EOL;
     $loginData = [
         'type' => 'tool',
-        'auth_key' => 'ab2cd'
+        'auth_key' => 'tool'
     ];
 
     $cli->sendCallback(json_encode($loginData), 'common.node.login', function($header, $body) use ($cli) {
@@ -69,6 +69,7 @@ $client->on("connect", function(Swoole\Client $cli) {
                 'version' => '2.0.0',
                 'password' => '123455',
                 'nodeId' => 10000,
+                'taskId' => 'user_process_2_0_0',
                 'url' => 'http://baidu.com/user_process_2_0_0.zip?key=bacdaaaa'
             ];
 

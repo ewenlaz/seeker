@@ -4,6 +4,7 @@ namespace Seeker\Manager;
 use Seeker\Server\Tcp\Worker as TcpWorker;
 use Seeker\Service\Dispatcher;
 use Seeker\Server\Connection;
+use Seeker\Protocol\Base\Setting;
 
 class Worker extends TcpWorker
 {
@@ -20,32 +21,101 @@ class Worker extends TcpWorker
             'common.node.login' => [
                 'service' => 'Seeker\\Service\\Common\\Node:login',
                 'request' => 'Seeker\\Protocol\\Json',
-                'response' => 'Seeker\\Protocol\\Base'
-            ],
-            'tool.deploy.push' => [
-                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
-                'request' => 'Seeker\\Protocol\\Json',
-                'response' => 'Seeker\\Protocol\\Base'
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_GUEST
             ],
             'common.event_listen.listen' => [
                 'service' => 'Seeker\\Service\\Common\\EventListen:listen',
                 'request' => 'Seeker\\Protocol\\Json',
-                'response' => 'Seeker\\Protocol\\Base'
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_COMMON
             ],
             'common.event_listen.remove' => [
                 'service' => 'Seeker\\Service\\Common\\EventListen:remove',
                 'request' => 'Seeker\\Protocol\\Json',
-                'response' => 'Seeker\\Protocol\\Base'
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_COMMON
             ],
-            'node.deploy.progress' => [
+            //节点部分...Node调用。
+            'manager.deploy.progress' => [
                 'service' => 'Seeker\\Manager\\Service\\Deploy:progress',
                 'request' => 'Seeker\\Protocol\\Json',
-                'response' => 'Seeker\\Protocol\\Base'
-            ]
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_NODE
+            ],
+
+            //节点部分...客房端调用
+            'manager.node.add' => [
+                'service' => 'Seeker\\Manager\\Service\\Node:add',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
+
+            'manager.node.remove' => [
+                'service' => 'Seeker\\Manager\\Service\\Node:remove',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
+
+            //客房端调用
+            'manager.node.lists' => [
+                'service' => 'Seeker\\Manager\\Service\\Node:lists',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL | Connection::AUTHED_NODE
+            ],
+            //部署部分 , 客房端调用
+            'manager.node.deploy' => [
+                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
+            //进程管理部分 , 客房端调用
+            'manager.node.start_process' => [
+                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
+
+            'manager.node.stop_process' => [
+                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
+
+            'manager.node.remove_process' => [
+                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
+            //Service部分.. , 客房端调用
+            'manager.node.start_service' => [
+                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
+
+            'manager.node.stop_service' => [
+                'service' => 'Seeker\\Manager\\Service\\Tool:deployPush',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_TOOL
+            ],
         ]);
 
         $this->dispatcher->remoteCalls([
-            'manager.deploy.push' => [
+            'node.deploy.push' => [
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base'
+            ],
+            'common.node.login' => [
                 'request' => 'Seeker\\Protocol\\Json',
                 'response' => 'Seeker\\Protocol\\Base'
             ]
@@ -66,7 +136,7 @@ class Worker extends TcpWorker
         ]);
 
         //开始连接Nodes......
-        $nodeClient = new NodeClient('0.0.0.0', 9902);
+        $nodeClient = new NodeClient('0.0.0.0', 9902, Setting::eof());
         $nodeClient
             ->setDispatcher($this->dispatcher)
             ->setNodeId(10000)

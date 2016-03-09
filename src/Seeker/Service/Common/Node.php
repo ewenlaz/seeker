@@ -12,15 +12,15 @@ class Node extends Base
     {
         //查找相应的Key.
         $key = $this->request->get('auth_key');
+
         $type = $this->request->get('type');
 
         $authKeys = shared('setting')->get('auth_keys');
 
         echo 'Auth......' . PHP_EOL;
 
-        if ($authKeys && isset($authKeys[$type]) && $authKeys[$type] == $key) {
-            $this->connection->isAuth = true;
-            $this->connection->type = $type;
+        if ($authKeys && isset($authKeys[$key])) {
+            $this->connection->setAuthed($authKeys[$key]);
             $this->connection->send($this->response);
         } else {
             $this->connection->send($this->response->setCode(Error::AUTH_ERROR));

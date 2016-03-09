@@ -60,7 +60,8 @@ class Dispatcher
             $remoteCall = new RemoteCall($request);
             return $remoteCall;
         } else {
-            throw new \Exception("remote service not listen....", 1);
+            echo 'remote service not listen....:' . $service . PHP_EOL;
+            //throw new \Exception("remote service not listen....", 1);
         }
     }
 
@@ -110,28 +111,39 @@ class Dispatcher
         if ($listener) {
 
             $listener = $this->listens[$service];
-            list($service, $method) = explode(':', $listener['service']);
 
-            $request = $listener['request'];
-            $request = new $request();
-            $request->setHeaders($header);
-            $request->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
+            //验证权限。。。。
+            if (!$listener['authed'] || $connection->getAuthed() & $listener['authed']) {
+                list($service, $method) = explode(':', $listener['service']);
 
-            $response = $listener['response'];
+                $request = $listener['request'];
+                $request = new $request();
+                $request->setHeaders($header);
+                $request->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
 
-            $response = new $response();
-            $respHeader = Base::headerToResponse($header);
+                $response = $listener['response'];
 
-            $response->setHeaders($respHeader);
+                $response = new $response();
+                $respHeader = Base::headerToResponse($header);
 
-            $service = new $service($this, $connection, $request, $response);
-            $ret = $service->$method();
+                $response->setHeaders($respHeader);
+
+                $service = new $service($this, $connection, $request, $response);
+                $ret = $service->$method();
+            } else {
+                $respHeader = Base::headerToResponse($header);
+                $resp = new Base();
+                $resp->setCode(Error::AUTH_NOT_ALLOW);
+                $connection->send($resp);
+                echo 'AUTH_NOT_ALLOW' . PHP_EOL;
+            }
         } else {
             $respHeader = Base::headerToResponse($header);
             $resp = new Base();
+            $resp->setHeaders($respHeader);
             $resp->setCode(Error::PROTOCOL_NOT_FOUND);
             echo 'ERROR.....' . PHP_EOL;
-            //$connection->send($resp);
+            $connection->send($resp);
         }
     }
 }
