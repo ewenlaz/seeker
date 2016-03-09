@@ -1,12 +1,13 @@
 <?php
 
+use Seeker\Standard\ConnectionInterface;
 
 include 'autoload.php';
 
 
 $settings = [
-    'auth_keys' => [
-        'manager' => 'node_10000'
+    'authKeys' => [
+        'node_10000' => ConnectionInterface::AUTHED_MANAGER
     ]
 ];
 

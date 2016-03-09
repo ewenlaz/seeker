@@ -113,7 +113,7 @@ class Dispatcher
             $listener = $this->listens[$service];
 
             //验证权限。。。。
-            if (!$listener['authed'] || $connection->getAuthed() & $listener['authed']) {
+            if (!isset($listener['authed']) || !$listener['authed'] || $connection->getAuthed() & $listener['authed']) {
                 list($service, $method) = explode(':', $listener['service']);
 
                 $request = $listener['request'];

@@ -44,8 +44,9 @@ class NodeClient extends TcpConnection
         $this->dispatcher->remoteCall('common.node.login')
             ->setToNode($this->nodeId)
             ->set('type', 'manager')
-            ->set('auth_key', $this->authKey)
+            ->set('authKey', $this->authKey)
             ->then(function($connection, $response) {
+                echo '------ node is connect and authed' . PHP_EOL;
                 $connection->setAuthed(static::AUTHED_COMMON | static::AUTHED_NODE);
             })
             ->sendTo($this);
@@ -74,7 +75,11 @@ class NodeClient extends TcpConnection
 
     public static function remove($nodeId)
     {
-        return isset(static::$nodes[$nodeId]) ? unset(static::$nodes[$nodeId]) : null;
+        if (isset(static::$nodes[$nodeId])) {
+            unset(static::$nodes[$nodeId]);
+            return true;
+        }
+        return false;
     }
 
     public static function boardcast(Base $resp)

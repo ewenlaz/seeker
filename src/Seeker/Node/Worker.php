@@ -22,8 +22,13 @@ class Worker extends TcpWorker
                 'request' => 'Seeker\\Protocol\\Json',
                 'response' => 'Seeker\\Protocol\\Base'
             ],
-            'manager.deploy.push' => [
+            'node.deploy.push' => [
                 'service' => 'Seeker\\Node\\Service\\Deploy:push',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base'
+            ],
+            'node.deploy.remove' => [
+                'service' => 'Seeker\\Node\\Service\\Deploy:remove',
                 'request' => 'Seeker\\Protocol\\Json',
                 'response' => 'Seeker\\Protocol\\Base'
             ]

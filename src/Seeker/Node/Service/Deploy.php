@@ -4,7 +4,8 @@ namespace Seeker\Node\Service;
 
 use Seeker\Sharded;
 use Seeker\Protocol\Error;
-use Seeker\Service\Base;
+use Seeker\Service\Common\Base;
+use Seeker\Manager\NodeClient;
 
 class Deploy extends Base
 {
@@ -30,5 +31,13 @@ class Deploy extends Base
         // $pushReq->then(function($response) {
         //     echo 'remote back:' . $response;
         // });
+    }
+
+    public function remove()
+    {
+        $nodeId = $this->request->get('nodeId');
+        echo 'master requet remove node : '. $nodeId . PHP_EOL; 
+        //移除本地Node连接Id....
+        NodeClient::remove($nodeId);
     }
 }

@@ -64,19 +64,36 @@ $client->on("connect", function(Swoole\Client $cli) {
     $cli->sendCallback(json_encode($loginData), 'common.node.login', function($header, $body) use ($cli) {
         if ($header['code'] === 0) {
 
-            $pushData = [
-                'process' => 'user_process',
-                'version' => '2.0.0',
-                'password' => '123455',
+            //发送挂载协议
+            $nodeAddData = [
+                'ip' => '0.0.0.0',
+                'port' => 9902,
                 'nodeId' => 10000,
-                'taskId' => 'user_process_2_0_0',
-                'url' => 'http://baidu.com/user_process_2_0_0.zip?key=bacdaaaa'
+                'authedKey' => 'node_10000'
             ];
 
-            $cli->sendCallback(json_encode($pushData), 'tool.deploy.push', function($header, $body) {
+            $cli->sendCallback(json_encode($nodeAddData), 'manager.node.add', function($header, $body) use ($cli) {
                 echo json_encode($header) . PHP_EOL;
                 echo $body . PHP_EOL;
+
+                $pushData = [
+                    'process' => 'user_process',
+                    'version' => '2.0.0',
+                    'password' => '123455',
+                    'nodeId' => 10000,
+                    'taskId' => 'user_process_2_0_0',
+                    'url' => 'http://baidu.com/user_process_2_0_0.zip?key=bacdaaaa'
+                ];
+
+                $cli->sendCallback(json_encode($pushData), 'manager.node.deploy', function($header, $body) {
+                    echo json_encode($header) . PHP_EOL;
+                    echo $body . PHP_EOL;
+                });
+
+                
             });
+
+
         }
     });
 });

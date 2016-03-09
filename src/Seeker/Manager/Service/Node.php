@@ -3,10 +3,11 @@
 namespace Seeker\Manager\Service;
 
 use Seeker\Sharded;
-use Seeker\Service\Base;
+use Seeker\Service\Common\Base;
 use Seeker\Manager\NodeClient;
 use Seeker\Protocol\Error;
 use Seeker\Protocol\Base\Setting;
+use Seeker\Standard\ConnectionInterface;
 
 class Node extends Base
 {
@@ -83,9 +84,9 @@ class Node extends Base
         });
 
         $node = NodeClient::find($nodeId);
-        if (!$node && $node->isAuth) {
+        if (!$node || !($node->getAuthed() & ConnectionInterface::AUTHED_NODE)) {
             $this->response->setCode(Error::NODE_NOT_FOUND);
-        } else {
+        } elseif ($node) {
             $pushReq->sendTo($node);
         }
         $this->connection->send($this->response);

@@ -5,7 +5,7 @@ namespace Seeker\Manager\Service;
 use Seeker\Sharded;
 use Seeker\Manager\NodeClient;
 use Seeker\Protocol\Error;
-use Seeker\Service\Base;
+use Seeker\Service\Common\Base;
 
 class Deploy extends Base
 {
