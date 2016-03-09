@@ -1,0 +1,137 @@
+<?php
+namespace Seeker\Service;
+
+use Seeker\Protocol\Base\Setting;
+use Seeker\Protocol\Base;
+use Seeker\Protocol\Error;
+
+class Dispatcher
+{
+
+
+    const PROTOCOL_IS_EVENT = 4;
+    const PROTOCOL_IS_BACK = 1;
+    const PROTOCOL_MUST_BACK = 2;
+    
+    protected $listens = [];
+    protected $remoteCalls = [];
+    protected $listenEvents = [];
+    protected $productEvents = [];
+
+
+    public function listens($listens)
+    {
+        foreach ($listens as $service => $ctrl) {
+            echo 'Service:'. crc32($service) . PHP_EOL;
+            $this->listens[crc32($service)] = $ctrl;
+        }
+    }
+
+    public function remoteCalls($listens)
+    {
+        foreach ($listens as $service => $ctrl) {
+            echo 'Service:'. crc32($service) . PHP_EOL;
+            $this->remoteCalls[crc32($service)] = $ctrl;
+        }
+    }
+
+    public function listenEvents($listens)
+    {
+        foreach ($listens as $service => $ctrl) {
+            echo 'Service:'. crc32($service) . PHP_EOL;
+            $this->listenEvents[crc32($service)] = $ctrl;
+        }
+    }
+
+    public function productEvents($listens)
+    {
+        foreach ($listens as $service => $ctrl) {
+            echo 'Service:'. crc32($service) . PHP_EOL;
+            $this->productEvents[crc32($service)] = $ctrl;
+        }
+    }
+
+    public function remoteCall($service)
+    {
+        if (isset($this->remoteCalls[crc32($service)])) {
+            $remote = $this->remoteCalls[crc32($service)];
+            $request = new $remote['request'];
+            $request->setService($service);
+            $remoteCall = new RemoteCall($request);
+            return $remoteCall;
+        } else {
+            throw new \Exception("remote service not listen....", 1);
+        }
+    }
+
+    public function dispatch($connection, $data)
+    {
+        //开始解析协议
+
+        // $base = Base();
+        // $base->setStream($data);
+        // $service = $base->getHeader('service');
+
+        $header = Base::parseHeader($data);
+
+        $service = $header['service'];
+
+        $flag = $header['flag'];
+
+        print_r($header);
+        echo $data . PHP_EOL;
+
+        $listener = null;
+        if ($flag & static::PROTOCOL_IS_EVENT) {
+            if (isset($this->listenEvents[$service])) {
+                $listener = $this->listenEvents[$service];
+            }
+        } else {
+            if ($flag & static::PROTOCOL_IS_BACK) {
+                if (isset($this->remoteCalls[$service])) {
+                    $listener = $this->remoteCalls[$service];
+                    //找到被监听的RemoteCall....
+                    $response = $listener['response'];
+                    $response = new $response();
+                    $response->setHeaders($header);
+                    $response->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
+                    $response->parseBody();
+                    return RemoteCall::onBack($this, $connection, $response);
+                } else {
+                    echo 'callback not found' . PHP_EOL;
+                }              
+            } else {
+                if (isset($this->listens[$service])) {
+                    $listener = $this->listens[$service];
+                }
+            }
+        }
+
+        if ($listener) {
+
+            $listener = $this->listens[$service];
+            list($service, $method) = explode(':', $listener['service']);
+
+            $request = $listener['request'];
+            $request = new $request();
+            $request->setHeaders($header);
+            $request->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
+
+            $response = $listener['response'];
+
+            $response = new $response();
+            $respHeader = Base::headerToResponse($header);
+
+            $response->setHeaders($respHeader);
+
+            $service = new $service($this, $connection, $request, $response);
+            $ret = $service->$method();
+        } else {
+            $respHeader = Base::headerToResponse($header);
+            $resp = new Base();
+            $resp->setCode(Error::PROTOCOL_NOT_FOUND);
+            echo 'ERROR.....' . PHP_EOL;
+            //$connection->send($resp);
+        }
+    }
+}
