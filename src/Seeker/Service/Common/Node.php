@@ -11,11 +11,11 @@ class Node extends Base
     public function login()
     {
         //查找相应的Key.
-        $key = $this->request->get('auth_key');
+        $key = $this->request->get('authKey');
 
         $type = $this->request->get('type');
 
-        $authKeys = shared('setting')->get('auth_keys');
+        $authKeys = shared('setting')->get('authKeys');
 
         echo 'Auth......' . PHP_EOL;
 

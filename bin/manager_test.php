@@ -58,7 +58,7 @@ $client->on("connect", function(Swoole\Client $cli) {
     echo 'on connect' . PHP_EOL;
     $loginData = [
         'type' => 'tool',
-        'auth_key' => 'tool'
+        'authKey' => 'tool'
     ];
 
     $cli->sendCallback(json_encode($loginData), 'common.node.login', function($header, $body) use ($cli) {

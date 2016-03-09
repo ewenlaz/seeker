@@ -24,6 +24,16 @@ class TcpConnection implements ConnectionInterface
         $this->port = $port;
     }
 
+    public function getHost()
+    {
+        return $this->host;
+    }
+
+    public function getPort()
+    {
+        return $this->port;
+    }
+
     public function setAuthed($flag)
     {
         $this->authed = $flag;

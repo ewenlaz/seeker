@@ -7,7 +7,7 @@ use Seeker\Standard\ConnectionInterface;
 
 
 $settings = [
-    'auth_keys' => [
+    'authKeys' => [
         'tool' => ConnectionInterface::AUTHED_COMMON | ConnectionInterface::AUTHED_TOOL
     ]
 ];

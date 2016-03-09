@@ -4,6 +4,7 @@ namespace Seeker\Manager;
 
 use Seeker\Client\TcpConnection;
 use Seeker\Protocol\Json;
+use Seeker\Protocol\Base;
 use Seeker\Service\RemoteCall;
 
 class NodeClient extends TcpConnection
@@ -20,10 +21,20 @@ class NodeClient extends TcpConnection
         return $this;
     }
 
+    public function getNodeId()
+    {
+        return $this->nodeId;
+    }
+
     public function setAuthKey($key)
     {
         $this->authKey = $key;
         return $this;
+    }
+
+    public function getAuthKey()
+    {
+        return $this->authKey;
     }
 
     public function onConnect()
@@ -59,5 +70,23 @@ class NodeClient extends TcpConnection
     public static function find($nodeId)
     {
         return isset(static::$nodes[$nodeId]) ? static::$nodes[$nodeId] : null;
+    }
+
+    public static function remove($nodeId)
+    {
+        return isset(static::$nodes[$nodeId]) ? unset(static::$nodes[$nodeId]) : null;
+    }
+
+    public static function boardcast(Base $resp)
+    {
+        foreach (static::$nodes as $node) {
+            $resp->setToNode($node->getNodeId());
+            $node->send($resp);
+        }
+    }
+
+    public static function getAll()
+    {
+        return static::$nodes;
     }
 }
