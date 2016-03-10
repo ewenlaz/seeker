@@ -40,4 +40,14 @@ class Deploy extends Base
         //移除本地Node连接Id....
         NodeClient::remove($nodeId);
     }
+
+    public function startProcess()
+    {
+        //第一步找到目标目录
+        $path = shared('setting')->get('deployPath');
+        $process = $this->request->get('process');
+        $version = $this->request->get('version');
+        $startFile = $this->request->get('start');
+        $path = $path . 'process/' . $process . '/' . $version . '/' . $startFile;
+    }
 }

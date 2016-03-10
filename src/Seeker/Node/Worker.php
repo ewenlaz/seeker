@@ -25,13 +25,43 @@ class Worker extends TcpWorker
             'node.deploy.push' => [
                 'service' => 'Seeker\\Node\\Service\\Deploy:push',
                 'request' => 'Seeker\\Protocol\\Json',
-                'response' => 'Seeker\\Protocol\\Base'
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_MANAGER
             ],
-            'node.deploy.remove' => [
-                'service' => 'Seeker\\Node\\Service\\Deploy:remove',
+            //进程管理部分 , 客房端调用
+            'node.deploy.start_process' => [
+                'service' => 'Seeker\\Manager\\Service\\Deploy:startProcess',
                 'request' => 'Seeker\\Protocol\\Json',
-                'response' => 'Seeker\\Protocol\\Base'
-            ]
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_MANAGER
+            ],
+
+            'node.deploy.stop_process' => [
+                'service' => 'Seeker\\Manager\\Service\\Deploy:stopProcess',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_MANAGER
+            ],
+
+            'node.deploy.remove_process' => [
+                'service' => 'Seeker\\Manager\\Service\\Deploy:removeProcess',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_MANAGER
+            ],
+            //Service部分.. , 客房端调用
+            'node.deploy.start_service' => [
+                'service' => 'Seeker\\Manager\\Service\\Deploy:startService',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_MANAGER
+            ],
+            'node.deploy.stop_service' => [
+                'service' => 'Seeker\\Manager\\Service\\Deploy:stopService',
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+                'authed' => Connection::AUTHED_MANAGER
+            ],
         ]);
         
         $this->dispatcher->remoteCalls([

@@ -4,7 +4,7 @@ namespace Seeker\Server\Standard;
 
 interface WorkerInterface
 {
-	public function setPid($pid);
+    public function setPid($pid);
     public function getPid();
     public function setId($id);
     public function getId();

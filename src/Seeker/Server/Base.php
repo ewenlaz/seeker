@@ -11,15 +11,22 @@ class Base
 
     protected $listeners = null;
     protected $swServer = null;
+    protected $processes = null;
 
     public function __construct()
     {
         $this->listeners = new \SplObjectStorage;
+        $this->processes = new \SplObjectStorage;
     }
 
-    public function addTask(Task $task, $count)
+    public function addTask(Task $task)
     {
 
+    }
+
+    public function addProcess($process)
+    {
+        $this->processes->attach($process);
     }
 
     public function addListener(ListenerInterface $listener)
@@ -39,6 +46,10 @@ class Base
                 $port->set($listener->getSetting());
             }
             $this->addSwooleEvent($listener);
+        }
+
+        foreach ($this->processes as $process) {
+            $this->swServer->addProcess($process->getSwooleProcess());
         }
 
         $this->swServer->start();

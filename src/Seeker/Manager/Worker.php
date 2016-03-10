@@ -130,6 +130,28 @@ class Worker extends TcpWorker
                 'request' => 'Seeker\\Protocol\\Json',
                 'response' => 'Seeker\\Protocol\\Base'
             ],
+            //进程管理部分 , 客房端调用
+            'node.deploy.start_process' => [
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+            ],
+            'node.deploy.stop_process' => [
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+            ],
+            'node.deploy.remove_process' => [
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+            ],
+            //Service部分.. , 客房端调用
+            'node.deploy.start_service' => [
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+            ],
+            'node.deploy.stop_service' => [
+                'request' => 'Seeker\\Protocol\\Json',
+                'response' => 'Seeker\\Protocol\\Base',
+            ],
         ]);
 
         $this->dispatcher->listenEvents([

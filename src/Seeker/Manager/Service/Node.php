@@ -13,7 +13,6 @@ class Node extends Base
 {
     const ERROR_NODE_EXISTS = 10001;
     const ERROR_NODE_NOT_EXISTS = 10002;
-
     public function add()
     {
         $ip = $this->request->get('ip');
@@ -94,26 +93,101 @@ class Node extends Base
 
     public function startProcess()
     {
+        $nodeId = $this->request->get('nodeId');
 
+        $node = NodeClient::find($nodeId);
+        if (!$node || !($node->getAuthed() & ConnectionInterface::AUTHED_NODE)) {
+            $this->response->setCode(static::ERROR_NODE_NOT_EXISTS);
+        } elseif ($node) {
+            $pushReq = $this->dispatcher->remoteCall('node.deploy.start_process');
+            $pushReq->setToNode($nodeId);
+            $pushReq->set($this->request->get());
+            $pushReq->then(function($response) {
+                echo 'remote back:' . $response;
+            });
+
+            $pushReq->sendTo($node);
+        }
+        $this->connection->send($this->response);
     }
 
     public function stopProcess()
     {
-        
+        $nodeId = $this->request->get('nodeId');
+
+        $node = NodeClient::find($nodeId);
+        if (!$node || !($node->getAuthed() & ConnectionInterface::AUTHED_NODE)) {
+            $this->response->setCode(static::ERROR_NODE_NOT_EXISTS);
+        } elseif ($node) {
+            $pushReq = $this->dispatcher->remoteCall('node.deploy.stop_process');
+            $pushReq->setToNode($nodeId);
+            $pushReq->set($this->request->get());
+            $pushReq->then(function($response) {
+                echo 'remote back:' . $response;
+            });
+
+            $pushReq->sendTo($node);
+        }
+        $this->connection->send($this->response);
     }
 
     public function removeProcess()
     {
-        
+        $nodeId = $this->request->get('nodeId');
+
+        $node = NodeClient::find($nodeId);
+        if (!$node || !($node->getAuthed() & ConnectionInterface::AUTHED_NODE)) {
+            $this->response->setCode(static::ERROR_NODE_NOT_EXISTS);
+        } elseif ($node) {
+            $pushReq = $this->dispatcher->remoteCall('node.deploy.remove_process');
+            $pushReq->setToNode($nodeId);
+            $pushReq->set($this->request->get());
+            $pushReq->then(function($response) {
+                echo 'remote back:' . $response;
+            });
+
+            $pushReq->sendTo($node);
+        }
+        $this->connection->send($this->response);
     }
 
     public function startService()
     {
-        
+        $nodeId = $this->request->get('nodeId');
+
+        $node = NodeClient::find($nodeId);
+        if (!$node || !($node->getAuthed() & ConnectionInterface::AUTHED_NODE)) {
+            $this->response->setCode(static::ERROR_NODE_NOT_EXISTS);
+        } elseif ($node) {
+            $pushReq = $this->dispatcher->remoteCall('node.deploy.start_service');
+            $pushReq->setToNode($nodeId);
+            $pushReq->set($this->request->get());
+            $pushReq->then(function($response) {
+                echo 'remote back:' . $response;
+            });
+
+            $pushReq->sendTo($node);
+        }
+        $this->connection->send($this->response);
     }
 
     public function stopService()
     {
-        
+        $nodeId = $this->request->get('nodeId');
+
+        $node = NodeClient::find($nodeId);
+        if (!$node || !($node->getAuthed() & ConnectionInterface::AUTHED_NODE)) {
+            $this->response->setCode(static::ERROR_NODE_NOT_EXISTS);
+        } elseif ($node) {
+            $pushReq = $this->dispatcher->remoteCall('node.deploy.stop_service');
+            $pushReq->setToNode($nodeId);
+            $pushReq->set($this->request->get());
+            $pushReq->then(function($response) {
+                echo 'remote back:' . $response;
+            });
+
+            $pushReq->sendTo($node);
+        }
+        $this->connection->send($this->response);
     }
 }
