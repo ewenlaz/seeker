@@ -13,19 +13,4 @@ class Setting
     }
 }
 
-function shared($name, $callback = null)
-{
-    static $services = [];
-    if (!$callback) {
-    	if (!$services[$name][1]) {
-    		$services[$name][1] = $services[$name][0]();
-    	}
-    	return $services[$name][1];
-    } else {
-    	$services[$name] = [$callback, null];
-    }
-}
-
-spl_autoload_register(function($class) {
-    require __DIR__ . '/../src/' . str_replace('\\', '/', $class) . '.php'; 
-});
+require __DIR__ . '/../src/start.php';
