@@ -47,11 +47,11 @@ $client->set(
     ]
 );
 
-$client->_file = file_get_contents('service.zip');
-$client->_start = 0;
-$client->_size = strlen($client->_file);
-$client->_fileMd5 = md5_file(__DIR__ .'/service.zip');
-$client->_buffsize = 2 * 1024;
+// $client->_file = file_get_contents('service.zip');
+// $client->_start = 0;
+// $client->_size = strlen($client->_file);
+// $client->_fileMd5 = md5_file(__DIR__ .'/service.zip');
+// $client->_buffsize = 2 * 1024;
 
 $client->on("connect", function(Swoole\Client $cli) {
 
@@ -114,4 +114,4 @@ $client->on("close", function(Swoole\Client $cli){
     echo "Connection close\n";
 });
 
-$client->connect('127.0.0.1', 9901);
+$client->connect('0.0.0.0', 9901);

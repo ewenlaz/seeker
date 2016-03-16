@@ -1,7 +1,7 @@
 <?php
 
 use Phalcon\Loader;
-use Seeker\Core\DI;
+use Seeker\Core\DIFactory;
 
 $loader = new Loader;
 $loader->registerNamespaces([
@@ -10,7 +10,7 @@ $loader->registerNamespaces([
 
 $loader->register();
 
-$di = new DI;
+$di = new DIFactory;
 $di->set('loader', function() use ($loader) {
     return $loader;
 }) ;

@@ -6,8 +6,7 @@ use Seeker\Service\ServiceProcessManager;
 use Seeker\Service\Dispatcher;
 use Seeker\Protocol\Base\Setting;
 use Seeker\Service\Worker;
-
-echo com_create_guid();
+use Seeker\Standard\ConnectionInterface;
 
 $di = require __DIR__ . '/../start.php';
 
@@ -19,6 +18,48 @@ $type = isset($params['type']) && $params['type'] ? $params['type'] : 'node';
 if (!in_array($type, ['node', 'master'])) {
     Console::debug('节点类型不支持%s', $type);
 }
+//生成配置信息。。。。
+//检查配置表....
+
+$tmpPath = isset($params['tmp']) ? $params['tmp'] : __DIR__ . '/tmp/';
+if (!is_dir($tmpPath)) {
+    Console::debug('创建临时目录');
+    mkdir($tmpPath);
+}
+$keyFile = $tmpPath . 'key.txt';
+$keys = [];
+if (file_exists($keyFile)) {
+    $keys = json_decode(file_get_contents($keyFile), true);
+    if (is_array($keys)) {
+        Console::debug('从缓存文件恢复ＫＥＹ信息');
+    } else {
+        Console::debug('从缓存文件恢复ＫＥＹ失败。内容有错。请删后重新启动。');
+        exit;
+    }
+} else {
+    Console::debug('开始生成KEY....');
+    $random = new \Phalcon\Security\Random();
+    $master = $random->hex(16);//Master. 连接ＫＥＹ。
+    Console::debug('master key:' . $master);
+    $harbor = $random->hex(16);
+    Console::debug('harbor key:' . $master);
+    $tool   = $random->hex(16);
+    Console::debug('tool key:' . $master);
+    $common   = $random->hex(16);
+    Console::debug('common key:' . $master);
+    $keys = [
+        $master => ConnectionInterface::AUTHED_MASTER,
+        $harbor => ConnectionInterface::AUTHED_HARBOR,
+        $tool => ConnectionInterface::AUTHED_TOOL,
+        $common => ConnectionInterface::AUTHED_COMMON,
+    ];
+
+    file_put_contents($keyFile, json_encode($keys));
+}
+
+$di->set('auth_keys', function() use ($keys) {
+    return $keys;
+});
 
 $di->set('server', function() {
     return new Base;
@@ -38,7 +79,6 @@ function loadDispatcherConfig($dispatcher, $file)
 }
 
 //加载Node配置
-
 loadDispatcherConfig($dispatcher, 'config/protocol_node.php');
 if ($type === 'master') {
     loadDispatcherConfig($dispatcher, 'config/protocol_master.php');
@@ -51,7 +91,6 @@ $di->set('dispatcher', function() use ($dispatcher) {
 Console::debug('配置完成');
 
 $server = $di->get('server');
-
 
 //获取执行文件。。
 $execs = [];
@@ -78,23 +117,3 @@ $server->addListener($listener);
 
 Console::debug('开始启动端口监听');
 $server->start();
-
-
-
-// $settings = [
-//     'authKeys' => [
-//         'tool' => ConnectionInterface::AUTHED_COMMON | ConnectionInterface::AUTHED_TOOL
-//     ],
-//     'exec' => [
-//         'php' => '/usr/local/php/bin/php'
-//     ],
-//     'autoloadServiceProcess' => [
-//         [
-//             'exec' => 'php',
-//             'process' => 'user',
-//             'version' => '2.2.0',
-//             'path' => __DIR__ . '/demo/service_process/user/start.php'
-//         ]
-//     ]
-// ];
-

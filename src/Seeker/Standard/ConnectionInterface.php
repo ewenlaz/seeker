@@ -7,7 +7,7 @@ interface ConnectionInterface
     const AUTHED_COMMON = 1;
     const AUTHED_NODE = 2;
     const AUTHED_HARBOR = 4;
-    const AUTHED_MANAGER = 8;
+    const AUTHED_MASTER = 8;
     const AUTHED_TOOL = 16;
 
     public function send($data);

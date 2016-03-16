@@ -2,12 +2,18 @@
 
 namespace Seeker\Core;
 
-use Phalcon\DI as PhalconDI;
+use Phalcon\DiInterface;
 
-class DI extends PhalconDI
+class DI
 {
-	public function __construct()
-	{
-		
-	}
+    protected static $defaultDI = null;
+    public static function setDefaultDI(DiInterface $di)
+    {
+        static::$defaultDI = $di;
+    }
+
+    public static function get($name)
+    {
+        return static::$defaultDI->get($name);
+    }
 }

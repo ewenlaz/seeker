@@ -4,7 +4,7 @@ namespace Seeker\Service\Common;
 
 use Seeker\Sharded;
 use Seeker\Protocol\Error;
-
+use Seeker\Core\DI;
 class Node extends Base
 {
     //节点认证
@@ -15,9 +15,7 @@ class Node extends Base
 
         $type = $this->request->get('type');
 
-        $authKeys = shared('setting')->get('authKeys');
-
-        echo 'Auth......' . PHP_EOL;
+        $authKeys = DI::get('auth_keys');
 
         if ($authKeys && isset($authKeys[$key])) {
             $this->connection->setAuthed($authKeys[$key]);
