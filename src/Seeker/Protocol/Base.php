@@ -6,6 +6,11 @@ use Seeker\Standard\ConnectionInterface;
 
 class Base
 {
+
+    const PROTOCOL_IS_EVENT = 4;
+    const PROTOCOL_IS_BACK = 1;
+    const PROTOCOL_MUST_BACK = 2;
+
     protected $header = [
         'len' => 0,
         'toNode' => 0,
@@ -24,7 +29,15 @@ class Base
     public function setHeaders($header)
     {
         $this->header = $header;
+        if (isset($header['service'])) {
+            $this->setService($header['service']);
+        }
         return $this;
+    }
+
+    public function getHeaders()
+    {
+        return $this->header;
     }
 
     public function setBodyStream($body)
@@ -186,7 +199,7 @@ class Base
             'fromNode' => $header['toNode'],
             'fromProcess' => $header['toProcess'],
             'service' => $header['service'],
-            'flag' => $header['flag'],
+            'flag' => $header['flag'] | static::PROTOCOL_IS_BACK,
             'code' => $header['code']
         ];
     }

@@ -43,13 +43,22 @@ class NodeClient extends TcpConnection
 
         $this->dispatcher->remoteCall('common.node.login')
             ->setToNode($this->nodeId)
-            ->set('type', 'manager')
+            ->set('type', 'master')
             ->set('authKey', $this->authKey)
             ->then(function($connection, $response) {
-                echo '------ node is connect and authed' . PHP_EOL;
-                $connection->setAuthed(static::AUTHED_COMMON | static::AUTHED_NODE);
+                if (!$response->getCode()) {
+                    $connection->setAuthed(static::AUTHED_COMMON | static::AUTHED_NODE);
+                } else {
+                    $connection->close();
+                }
             })
             ->sendTo($this);
+    }
+
+
+    public function onClose()
+    {
+        static::remove($this->nodeId);
     }
 
     public function setDispatcher($dispatcher)

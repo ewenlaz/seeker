@@ -50,7 +50,7 @@ return [
         ],
     ],
     'remoteCalls' => [
-        'node.deploy.progress' => [
+        'master.deploy.progress' => [
             'request' => 'Seeker\\Protocol\\Json',
             'response' => 'Seeker\\Protocol\\Base'
         ]

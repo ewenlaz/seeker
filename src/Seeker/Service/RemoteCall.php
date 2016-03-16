@@ -16,9 +16,9 @@ class RemoteCall
 
     public function then(callable $call)
     {
-        $this->request->setFlag($this->request->getFlag() | Dispatcher::PROTOCOL_MUST_BACK);
-        echo 'listen Then:' . crc32($this->request->getService()) . '_' . $this->request->getAskId(). PHP_EOL;
-        static::$listens[crc32($this->request->getService()) . '_' . $this->request->getAskId()] = $call;
+        $this->request->setFlag($this->request->getFlag() | Base::PROTOCOL_MUST_BACK);
+        echo 'listen Then:' . $this->request->getService() . '_' . $this->request->getAskId(). PHP_EOL;
+        static::$listens[$this->request->getService() . '_' . $this->request->getAskId()] = $call;
         return $this;
     }
 

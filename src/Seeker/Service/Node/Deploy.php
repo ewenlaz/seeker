@@ -18,7 +18,7 @@ class Deploy extends Base
 
         //Mask ... 需要做Http异步下载客户端。。。
         for ($i = 1; $i <= 10; $i ++) {
-            $pushReq = $this->dispatcher->remoteCall('node.deploy.progress');
+            $pushReq = $this->dispatcher->remoteCall('master.deploy.progress');
             $pushReq->set('progress', $i * 10);
             $pushReq->set('taskId', $this->request->get('taskId'));
             $pushReq->sendTo($this->connection);

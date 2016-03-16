@@ -20,7 +20,7 @@ class Console
 {
     public static function debug($data)
     {
-        echo sprintf('[%s][%8s]:%s', date('Y-m-d H:i:s'), 'DEBUG', $data) . PHP_EOL;
+        echo sprintf('[%s][%8s] > %s', date('Y-m-d H:i:s'), 'DEBUG', $data) . PHP_EOL;
     }
 }
 

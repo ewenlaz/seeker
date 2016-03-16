@@ -4,7 +4,7 @@ namespace Seeker\Service\Master;
 
 use Seeker\Sharded;
 use Seeker\Service\Common\Base;
-use Seeker\Manager\NodeClient;
+use Seeker\Service\NodeClient;
 use Seeker\Protocol\Error;
 use Seeker\Protocol\Base\Setting;
 use Seeker\Standard\ConnectionInterface;

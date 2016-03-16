@@ -58,7 +58,7 @@ $client->on("connect", function(Swoole\Client $cli) {
     echo 'on connect' . PHP_EOL;
     $loginData = [
         'type' => 'tool',
-        'authKey' => 'tool'
+        'authKey' => '28197366d585ffe112688d86d54ce31e'
     ];
 
     $cli->sendCallback(json_encode($loginData), 'common.node.login', function($header, $body) use ($cli) {
@@ -67,40 +67,35 @@ $client->on("connect", function(Swoole\Client $cli) {
             //发送挂载协议
             $nodeAddData = [
                 'ip' => '0.0.0.0',
-                'port' => 9902,
+                'port' => 9901,
                 'nodeId' => 10000,
-                'authedKey' => 'node_10000'
+                'authedKey' => '891628d5a53d01a18eb76bcbb5175c30'
             ];
 
-            $cli->sendCallback(json_encode($nodeAddData), 'manager.node.add', function($header, $body) use ($cli) {
-                echo json_encode($header) . PHP_EOL;
+            $cli->sendCallback(json_encode($nodeAddData), 'master.node.add', function($header, $body) use ($cli) {
+                echo 'NODE ADD...' . json_encode($header) . PHP_EOL;
                 echo $body . PHP_EOL;
 
-                $pushData = [
-                    'process' => 'user_process',
-                    'version' => '2.0.0',
-                    'password' => '123455',
-                    'nodeId' => 10000,
-                    'taskId' => 'user_process_2_0_0',
-                    'url' => 'http://baidu.com/user_process_2_0_0.zip?key=bacdaaaa'
-                ];
-
-                $cli->sendCallback(json_encode($pushData), 'manager.node.deploy', function($header, $body) {
-                    echo json_encode($header) . PHP_EOL;
-                    echo $body . PHP_EOL;
-                });
-
-                
             });
 
+            $pushData = [
+                'process' => 'user_process',
+                'version' => '2.0.0',
+                'nodeId' => 10000,
+                'taskId' => 'user_process_2_0_0',
+                'url' => 'http://baidu.com/user_process_2_0_0.zip?key=bacdaaaa'
+            ];
 
+            $cli->sendCallback(json_encode($pushData), 'master.node.deploy', function($header, $body) {
+                echo json_encode($header) . PHP_EOL;
+                echo $body . PHP_EOL;
+            });
         }
     });
 });
 
 $client->on("receive", function(Swoole\Client $cli, $data){
     $protocol = unpack('nlen/nfromNode/nfromProcess/NaskId/ntoNode/ntoProcess/lservice/sflag/lcode', $data);
-    print_r($protocol);
     if ($cli->_callbacks[$protocol['askId']]) {
         $cli->_callbacks[$protocol['askId']]($protocol, substr($data, 24));
     }

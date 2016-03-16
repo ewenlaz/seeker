@@ -7,6 +7,7 @@ use Seeker\Service\Dispatcher;
 use Seeker\Protocol\Base\Setting;
 use Seeker\Service\Worker;
 use Seeker\Standard\ConnectionInterface;
+use Seeker\Protocol\AskId;
 
 $di = require __DIR__ . '/../start.php';
 
@@ -114,6 +115,11 @@ $setting = Setting::eof();
 $setting['worker_num'] = 1;
 $listener->setting($setting);
 $server->addListener($listener);
+Console::debug('启动端ＡＳＫＩＤ原子计数器');
+$askIdCreater = new AskId;
+$di->set('askId', function() use ($askIdCreater) {
+    return $askIdCreater;
+});
 
 Console::debug('开始启动端口监听');
 $server->start();

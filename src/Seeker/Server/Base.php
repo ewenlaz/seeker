@@ -51,7 +51,6 @@ class Base implements InjectionAwareInterface
         foreach ($this->listeners as $listener) {
             if (!$this->swServer) {
                 $this->swServer = new \Swoole\Server($listener->getHost(), $listener->getPort(), SWOOLE_PROCESS, $listener->getType());
-                print_r($listener->getSetting());
                 $this->swServer->set($listener->getSetting());
             } else {
                 $port = $this->swServer->listen($listener->getHost(), $listener->getPort(), $listener->getType());

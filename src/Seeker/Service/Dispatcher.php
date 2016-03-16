@@ -4,15 +4,9 @@ namespace Seeker\Service;
 use Seeker\Protocol\Base\Setting;
 use Seeker\Protocol\Base;
 use Seeker\Protocol\Error;
-
+use Seeker\Core\DI;
 class Dispatcher
-{
-
-
-    const PROTOCOL_IS_EVENT = 4;
-    const PROTOCOL_IS_BACK = 1;
-    const PROTOCOL_MUST_BACK = 2;
-    
+{   
     protected $listens = [];
     protected $remoteCalls = [];
     protected $listenEvents = [];
@@ -54,10 +48,14 @@ class Dispatcher
     public function remoteCall($service)
     {
         if (isset($this->remoteCalls[crc32($service)])) {
+
             $remote = $this->remoteCalls[crc32($service)];
             $request = new $remote['request'];
             $request->setService($service);
+            $askId = DI::get('askId')->create();
+            $request->setAskId($askId);
             $remoteCall = new RemoteCall($request);
+            \Console::debug('remove call:'.$service . ', AskID:' . $askId);
             return $remoteCall;
         } else {
             echo 'remote service not listen....:' . $service . PHP_EOL;
@@ -79,16 +77,13 @@ class Dispatcher
 
         $flag = $header['flag'];
 
-        print_r($header);
-        echo $data . PHP_EOL;
-
         $listener = null;
-        if ($flag & static::PROTOCOL_IS_EVENT) {
+        if ($flag & Base::PROTOCOL_IS_EVENT) {
             if (isset($this->listenEvents[$service])) {
                 $listener = $this->listenEvents[$service];
             }
         } else {
-            if ($flag & static::PROTOCOL_IS_BACK) {
+            if ($flag & Base::PROTOCOL_IS_BACK) {
                 if (isset($this->remoteCalls[$service])) {
                     $listener = $this->remoteCalls[$service];
                     //找到被监听的RemoteCall....
@@ -142,7 +137,6 @@ class Dispatcher
             $resp = new Base();
             $resp->setHeaders($respHeader);
             $resp->setCode(Error::PROTOCOL_NOT_FOUND);
-            echo 'ERROR.....' . PHP_EOL;
             $connection->send($resp);
         }
     }

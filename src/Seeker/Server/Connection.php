@@ -28,7 +28,6 @@ class Connection implements ConnectionInterface
 
     public function send($data)
     {
-        echo $data . PHP_EOL;
         return $this->worker->getServer()->send($this->id, $data);
     }
 

@@ -2,7 +2,8 @@
 
 namespace Seeker\Service\Common;
 
-use Seeker\Service\Dispatcher;
+use Seeker\Protocol\Base as ProtocolBase;
+
 
 class Base
 {
@@ -15,7 +16,7 @@ class Base
         $this->dispatcher = $dispatcher;
         $this->request = $request;
         $this->request->parseBody();
-        $response->setFlag($response->getFlag() | Dispatcher::PROTOCOL_IS_BACK);
+        $response->setFlag($response->getFlag() | ProtocolBase::PROTOCOL_IS_BACK);
         $this->response = $response;
 
         $this->connection = $connection;

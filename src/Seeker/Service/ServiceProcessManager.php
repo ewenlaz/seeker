@@ -88,7 +88,6 @@ class ServiceProcessManager implements WorkerInterface
     public function onStart()
     {
         echo 'ServiceProcess Start....' . PHP_EOL;
-        var_dump($this->autoloadServiceProcess);
         foreach ($this->autoloadServiceProcess as $option) {
             $this->createProcesses($option);
         }
