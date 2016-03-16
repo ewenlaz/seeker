@@ -1,6 +1,6 @@
 <?php
 
-namespace Seeker\Manager;
+namespace Seeker\Service;
 
 use Seeker\Client\TcpConnection;
 use Seeker\Protocol\Json;

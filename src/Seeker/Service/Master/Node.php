@@ -1,6 +1,6 @@
 <?php
 
-namespace Seeker\Manager\Service;
+namespace Seeker\Service\Master;
 
 use Seeker\Sharded;
 use Seeker\Service\Common\Base;

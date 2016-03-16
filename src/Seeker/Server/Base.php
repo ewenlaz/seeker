@@ -3,8 +3,10 @@
 namespace Seeker\Server;
 
 use Seeker\Server\Standard\ListenerInterface;
+use Phalcon\Di\InjectionAwareInterface;
+use Phalcon\DiInterface;
 
-class Base
+class Base implements InjectionAwareInterface
 {
 
     const TYPE_SOCK_TCP = SWOOLE_SOCK_TCP;
@@ -12,11 +14,21 @@ class Base
     protected $listeners = null;
     protected $swServer = null;
     protected $processes = null;
+    protected $di;
 
     public function __construct()
     {
         $this->listeners = new \SplObjectStorage;
         $this->processes = new \SplObjectStorage;
+    }
+
+    public function setDI(DiInterface $di) {
+        $this->di = $di;
+    }
+
+    public function getDI()
+    {
+        return $this->di;
     }
 
     public function addTask(Task $task)

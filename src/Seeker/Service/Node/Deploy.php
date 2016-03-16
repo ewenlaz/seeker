@@ -1,6 +1,6 @@
 <?php
 
-namespace Seeker\Node\Service;
+namespace Seeker\Service\Node;
 
 use Seeker\Sharded;
 use Seeker\Protocol\Error;
