@@ -22,20 +22,21 @@ Seeker是一个基于Swoole实现的服务架构整体实现
 
 ### 启动Master
 
-> php ./bin/launcher.php --host=0.0.0.0 --port=9901 --exec-php=/use/local/php --type=master
+> php ./bin/launcher.php --host=0.0.0.0 --port=9901 --type=master
 
 ### 启动Node
 
-> php ./bin/launcher.php --host=0.0.0.0 --port=9901 --exec-php=/use/local/php --type=node
+> php ./bin/launcher.php --host=0.0.0.0 --port=9901 --type=node
 
 ### 启动Harbor
 
-> php ./bin/launcher.php --host=0.0.0.0 --port=9901 --exec-php=/use/local/php --type=harbor
+> php ./bin/launcher.php --host=0.0.0.0 --port=9901 --type=harbor
 
 ### 开发时启动Service process
 
 > 需要将目录切换到seeker的上次目录。
-> php ./seeker/bin/service.php --process=user --version=2.0.1 --vendor=./vendor --debug-user=./seeker/bin/demo/user/2.0.1 --debug-widget-demo=./seeker/bin/demo/widget_demo/1.0.0
+
+> php ./seeker/bin/service.php --process=user --version=2.0.1 --vendor=./vendor --debug-user=./seeker/bin/demo/user/2.0.1 --debug-widget-demo=./seeker/bin/demo/widget_demo/1.0.0 --host=0.0.0.0 --port=9901 --key=894e6d6e55a41bfdd0603edfb1eb41a7 --id=10000
 
 ### Service 示例
 

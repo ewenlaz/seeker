@@ -2,17 +2,31 @@
 
 use Seeker\Server\Base;
 use Seeker\Server\Tcp\Listener;
-use Seeker\Service\ServiceProcessManager;
+use Seeker\Service\ProcessManager;
 use Seeker\Service\Dispatcher;
 use Seeker\Protocol\Base\Setting;
 use Seeker\Service\Worker;
 use Seeker\Standard\ConnectionInterface;
 use Seeker\Protocol\AskId;
 
+
+function get_real_path($startFile)
+{
+    $pwd = $_SERVER['PWD'] . '/';
+    if (strpos($startFile, '/') !== 0) {
+
+        $_startFile = $pwd . $startFile;
+        if (!$startFile = realpath($_startFile)) {
+            throw new Exception('dir or file not found:' . $_startFile, 1);
+        }
+    }
+    return $startFile;
+}
+
 $di = require __DIR__ . '/../start.php';
 
 //从配置上获取监听端口
-$params = getopt('', ['port:', 'host:', 'type:', 'exec-php:', 'tmp:']);
+$params = getopt('', ['port:', 'host:', 'type:', 'exec-php:', 'tmp:', ':vendor']);
 
 $type = isset($params['type']) && $params['type'] ? $params['type'] : 'node';
 
@@ -22,12 +36,14 @@ if (!in_array($type, ['node', 'master'])) {
 //生成配置信息。。。。
 //检查配置表....
 
-$tmpPath = isset($params['tmp']) ? $params['tmp'] : __DIR__ . '/tmp/';
+$tmpPath = get_real_path(isset($params['tmp']) && $params['tmp'] ? $params['tmp'] : './tmp');
+$vendorPath = get_real_path(isset($params['vendor']) && $params['vendor'] ? $params['vendor'] : './vendor');
+
 if (!is_dir($tmpPath)) {
     Console::debug('创建临时目录');
     mkdir($tmpPath);
 }
-$keyFile = $tmpPath . 'key.txt';
+$keyFile = $tmpPath . '/key.txt';
 $keys = [];
 if (file_exists($keyFile)) {
     $keys = json_decode(file_get_contents($keyFile), true);
@@ -105,7 +121,7 @@ if (!isset($execs['php'])) {
     $execs['php'] = $_SERVER['_'];
 }
 
-$serviceProcessManager = new ServiceProcessManager($execs);
+$serviceProcessManager = new ProcessManager($execs);
 $server->addProcess($serviceProcessManager);
 
 //Worker

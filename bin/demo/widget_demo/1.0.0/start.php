@@ -1,7 +1,3 @@
 <?php
-
-while ($i < 10) {
-    echo 'service .....User' . PHP_EOL;
-    sleep(5);
-    $i ++;
-}
+//会传入变量$di 
+Console::debug('widget_demo..注册完成。。。。');

@@ -2,7 +2,6 @@
 
 namespace Seeker\Service\Master;
 
-use Seeker\Sharded;
 use Seeker\Service\Common\Base;
 use Seeker\Service\NodeClient;
 use Seeker\Protocol\Error;

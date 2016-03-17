@@ -5,7 +5,7 @@ use Seeker\Server\Standard\WorkerInterface;
 use Seeker\Server\Standard\WorkerBaseTrait;
 use Swoole\Process;
 
-class ServiceProcessManager implements WorkerInterface
+class ProcessManager implements WorkerInterface
 {
     use WorkerBaseTrait;
 
