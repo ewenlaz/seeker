@@ -48,6 +48,12 @@ return [
             'response' => 'Seeker\\Protocol\\Base',
             'authed' => Connection::AUTHED_MASTER
         ],
+        'node.client.listens' => [
+            'service' => 'Seeker\\Service\\Node\\Client:listens',
+            'request' => 'Seeker\\Protocol\\Json',
+            'response' => 'Seeker\\Protocol\\Base',
+            'authed' => Connection::AUTHED_COMMON
+        ]
     ],
     'remoteCalls' => [
         'master.deploy.progress' => [

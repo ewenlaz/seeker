@@ -18,8 +18,15 @@ $di->set('loader', function() use ($loader) {
 
 class Console
 {
-    public static function debug($data)
+    public static function debug()
     {
+        $args = func_get_args();
+        $data = '';
+        if (count($args) > 1) {
+            $data = call_user_func_array('sprintf', $args);
+        } else {
+            $data = $args[0];
+        }
         echo sprintf('[%s][%8s] > %s', date('Y-m-d H:i:s'), 'DEBUG', $data) . PHP_EOL;
     }
 }

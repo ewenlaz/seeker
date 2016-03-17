@@ -14,6 +14,10 @@ return [
         'common.node.login' => [
             'request' => 'Seeker\\Protocol\\Json',
             'response' => 'Seeker\\Protocol\\Base'
+        ],
+        'node.client.listens' => [
+            'request' => 'Seeker\\Protocol\\Json',
+            'response' => 'Seeker\\Protocol\\Base'
         ]
     ]
 ];

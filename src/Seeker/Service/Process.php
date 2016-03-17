@@ -17,7 +17,7 @@ class Process implements WorkerInterface, InjectionAwareInterface
 
     protected $di = null;
     protected $dispatcher = null;
-    protected $client = null;
+    protected $connection = null;
 
     public function onStart()
     {
@@ -25,8 +25,8 @@ class Process implements WorkerInterface, InjectionAwareInterface
         $params = $this->getDI()->get('params');
 
         //开始连接远程服务器。。。。
-        $connection = new ConnectClient($params['host'], $params['port'], Setting::eof());
-        $connection
+        $this->connection = new ConnectClient($params['host'], $params['port'], Setting::eof());
+        $this->connection
             ->setDispatcher($this->dispatcher)
             ->setNodeId($params['id'])
             ->setAuthKey($params['key'])

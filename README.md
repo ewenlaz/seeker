@@ -14,8 +14,11 @@ Seeker是一个基于Swoole实现的服务架构整体实现
 ### LIST
 
 - [ ] CLI命令行管理Master, 增加节点，发布service process ....
+- [ ] 并行远程service调用
+- [ ] 对发Node发出的协议 超时管理
 - [ ] HTTP异步下载文件，用于节点收到发布任务时 进行下载执行源码或是文件
 - [ ] .....
+- [ ] ConnectClient向Node 进行协议注册
 - [x] 消息分发器
 - [x] 远程调用
 - [x] .....

@@ -7,136 +7,235 @@ use Seeker\Protocol\Error;
 use Seeker\Core\DI;
 class Dispatcher
 {   
-    protected $listens = [];
-    protected $remoteCalls = [];
-    protected $listenEvents = [];
-    protected $productEvents = [];
-
+    protected $serviceListeners = [];
+    protected $proxyServiceListeners = [];
 
     public function listens($listens)
     {
         foreach ($listens as $service => $ctrl) {
-            echo 'Service:'. crc32($service) . PHP_EOL;
-            $this->listens[crc32($service)] = $ctrl;
+            $id = crc32($service);
+            if (isset($this->serviceListeners[$id])) {
+                continue;
+            }
+            $listener = new Listener($service, Listener::ACCEPT);
+            $listener->setRequest($ctrl['request']);
+            $listener->setResponse($ctrl['response']);
+            if (isset($ctrl['authed']) && $ctrl['authed']) {
+                $listener->setAuthed((int)$ctrl['authed']);
+            }
+            $listener->setService($ctrl['service']);
+            $this->pushListener($id, $listener);
         }
+    }
+
+    public function getServiceListeners()
+    {
+        return $this->serviceListeners;
+    }
+
+    public function pushListener($id, Listener $listener)
+    {
+        $this->serviceListeners[$id] = $listener;
+    }
+
+    public function getListener($service)
+    {
+        $id = crc32($service);
+        return $this->getListenerById($id);
+    }
+
+    public function getListenerById($id)
+    {
+        return isset($this->serviceListeners[$id]) ? $this->serviceListeners[$id] : null;
+    }
+
+    public function pushProxyListener($id, Listener $listener)
+    {
+        $this->proxyServiceListeners[$id] = $listener;
+    }
+
+
+    public function getProxyListener($service)
+    {
+        $id = crc32($service);
+        return $this->getProxyListenerById($id);
+    }
+
+    public function getProxyListenerById($id)
+    {
+        return isset($this->proxyServiceListeners[$id]) ? $this->proxyServiceListeners[$id] : null;
     }
 
     public function remoteCalls($listens)
     {
         foreach ($listens as $service => $ctrl) {
-            echo 'Service:'. crc32($service) . PHP_EOL;
-            $this->remoteCalls[crc32($service)] = $ctrl;
+            $id = crc32($service);
+            if (isset($this->serviceListeners[$id])) {
+                continue;
+            }
+
+            $listener = new Listener($service, Listener::REMOTE_CALL);
+            $listener->setRequest($ctrl['request']);
+            $listener->setResponse($ctrl['response']);
+            $this->pushListener($id, $listener);
         }
     }
 
     public function listenEvents($listens)
     {
-        foreach ($listens as $service => $ctrl) {
-            echo 'Service:'. crc32($service) . PHP_EOL;
-            $this->listenEvents[crc32($service)] = $ctrl;
-        }
+        // foreach ($listens as $service => $ctrl) {
+        //     $this->setServiceName($service);
+        //     $this->listenEvents[crc32($service)] = $ctrl;
+        // }
     }
 
     public function productEvents($listens)
     {
-        foreach ($listens as $service => $ctrl) {
-            echo 'Service:'. crc32($service) . PHP_EOL;
-            $this->productEvents[crc32($service)] = $ctrl;
-        }
+        // foreach ($listens as $service => $ctrl) {
+        //     $this->setServiceName($service);
+        //     $this->productEvents[crc32($service)] = $ctrl;
+        // }
     }
 
     public function remoteCall($service)
     {
-        if (isset($this->remoteCalls[crc32($service)])) {
-
-            $remote = $this->remoteCalls[crc32($service)];
-            $request = new $remote['request'];
+        $listener = $this->getListener($service);
+        if ($listener && $listener->getType() == Listener::REMOTE_CALL) {
+            $request = $listener->getRequest();
+            $request = new $request;
             $request->setService($service);
             $askId = DI::get('askId')->create();
             $request->setAskId($askId);
             $remoteCall = new RemoteCall($request);
-            \Console::debug('remove call:'.$service . ', AskID:' . $askId);
+            
+            \Console::debug(
+                'REMOTE_CALL: to (service:%s, node:%d, process:%d, askId:%d)'
+                , $listener->getName()
+                , $request->getToNode()
+                , $request->getToProcess()
+                , $askId
+            );
+
             return $remoteCall;
         } else {
-            echo 'remote service not listen....:' . $service . PHP_EOL;
-            //throw new \Exception("remote service not listen....", 1);
+            \Console::debug(
+                'REMOTE_CALL: no found (service:%s)'
+                , $service
+            );
         }
     }
 
     public function dispatch($connection, $data)
     {
         //开始解析协议
-
-        // $base = Base();
-        // $base->setStream($data);
-        // $service = $base->getHeader('service');
-
         $header = Base::parseHeader($data);
 
-        $service = $header['service'];
-
+        $listener = $this->getListenerById($header['service']);
         $flag = $header['flag'];
 
-        $listener = null;
-        if ($flag & Base::PROTOCOL_IS_EVENT) {
-            if (isset($this->listenEvents[$service])) {
-                $listener = $this->listenEvents[$service];
-            }
-        } else {
-            if ($flag & Base::PROTOCOL_IS_BACK) {
-                if (isset($this->remoteCalls[$service])) {
-                    $listener = $this->remoteCalls[$service];
-                    //找到被监听的RemoteCall....
-                    $response = $listener['response'];
-                    $response = new $response();
-                    $response->setHeaders($header);
-                    $response->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
-                    $response->parseBody();
-                    return RemoteCall::onBack($this, $connection, $response);
-                } else {
-                    echo 'callback not found' . PHP_EOL;
-                }              
-            } else {
-                if (isset($this->listens[$service])) {
-                    $listener = $this->listens[$service];
-                }
-            }
+        //查询是不是Proxy...
+        if (!$listener) {
+            $listener = $this->getProxyListenerById($header['service']);
         }
 
-        if ($listener) {
+        if ($listener && $flag & Base::PROTOCOL_IS_EVENT) {
+            \Console::debug(
+                'PROTOCOL_IS_EVENT: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                , $listener->getName()
+                , $header['fromNode']
+                , $header['fromProcess']
+                , $header['askId']
+            );
+        } elseif ($listener && $flag & Base::PROTOCOL_IS_BACK) {
 
-            $listener = $this->listens[$service];
+            if ($listener->isProxy()) {
+                \Console::debug(
+                    'PROTOCOL_PROXY_BACK: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                    , $listener->getName()
+                    , $header['fromNode']
+                    , $header['fromProcess']
+                    , $header['askId']
+                );
+            } else {
+                \Console::debug(
+                    'PROTOCOL_BACK: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                    , $listener->getName()
+                    , $header['fromNode']
+                    , $header['fromProcess']
+                    , $header['askId']
+                );
+                $response = $listener->getResponse();
+                $response = new $response;
+                $response->setHeaders($header);
+                $response->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
+                $response->parseBody();
+                return RemoteCall::onBack($this, $connection, $response);
+            }
 
-            //验证权限。。。。
-            if (!isset($listener['authed']) || !$listener['authed'] || $connection->getAuthed() & $listener['authed']) {
-                list($service, $method) = explode(':', $listener['service']);
 
-                $request = $listener['request'];
-                $request = new $request();
+        } elseif ($listener && $listener->checkAuth($connection->getAuthed())) {
+            if ($listener->isProxy()) {
+                \Console::debug(
+                    'ACCEPT_PROXY: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                    , $listener->getName()
+                    , $header['fromNode']
+                    , $header['fromProcess']
+                    , $header['askId']
+                );
+            } else {
+                \Console::debug(
+                    'ACCEPT_SELF: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                    , $listener->getName()
+                    , $header['fromNode']
+                    , $header['fromProcess']
+                    , $header['askId']
+                );
+                //是发给自己的协议
+                list($service, $method) = explode(':', $listener->getService());
+                $request = $listener->getRequest();
+                $request = new $request;
                 $request->setHeaders($header);
                 $request->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
-
-                $response = $listener['response'];
-
-                $response = new $response();
+                $response = $listener->getResponse();
+                $response = new $response;
                 $respHeader = Base::headerToResponse($header);
-
                 $response->setHeaders($respHeader);
-
                 $service = new $service($this, $connection, $request, $response);
                 $ret = $service->$method();
-            } else {
-                $respHeader = Base::headerToResponse($header);
-                $resp = new Base();
-                $resp->setCode(Error::AUTH_NOT_ALLOW);
-                $connection->send($resp);
-                echo 'AUTH_NOT_ALLOW' . PHP_EOL;
             }
+        } elseif ($listener) {
+            $respHeader = Base::headerToResponse($header);
+            $resp = new Base();
+            $resp->setHeaders($respHeader);
+            $resp->setCode(Error::AUTH_NOT_ALLOW);
+            $connection->send($resp);
+            \Console::debug(
+                'AUTH_NOT_ALLOW: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                , $listener->getName()
+                , $header['fromNode']
+                , $header['fromProcess']
+                , $header['askId']
+            );
+        } elseif ($flag & Base::PROTOCOL_IS_BACK) {
+            \Console::debug(
+                'PROTOCOL_NOT_FOUND but back: receive from (service:%d, node:%d, process:%d, askId:%d)'
+                , $header['service']
+                , $header['fromNode']
+                , $header['fromProcess']
+                , $header['askId']
+            );
         } else {
             $respHeader = Base::headerToResponse($header);
             $resp = new Base();
             $resp->setHeaders($respHeader);
             $resp->setCode(Error::PROTOCOL_NOT_FOUND);
+            \Console::debug(
+                'PROTOCOL_NOT_FOUND: receive from (service:%d, node:%d, process:%d, askId:%d)'
+                , $header['service']
+                , $header['fromNode']
+                , $header['fromProcess']
+                , $header['askId']
+            );
             $connection->send($resp);
         }
     }
