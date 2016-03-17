@@ -100,6 +100,11 @@ foreach ($params as $key => $val) {
         $execs[substr($key, 5)] = $val;
     }
 }
+
+if (!isset($execs['php'])) {
+    $execs['php'] = $_SERVER['_'];
+}
+
 $serviceProcessManager = new ServiceProcessManager($execs);
 $server->addProcess($serviceProcessManager);
 

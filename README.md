@@ -1,5 +1,5 @@
 # Seeker
-------
+
 Seeker是一个基于Swoole实现的服务架构整体实现
 
 ------
@@ -31,6 +31,11 @@ Seeker是一个基于Swoole实现的服务架构整体实现
 ### 启动Harbor
 
 > php ./bin/launcher.php --host=0.0.0.0 --port=9901 --exec-php=/use/local/php --type=harbor
+
+### 开发时启动Service process
+
+> 需要将目录切换到seeker的上次目录。
+> php ./seeker/bin/service.php --process=user --version=2.0.1 --vendor=./vendor --debug-user=./seeker/bin/demo/user/2.0.1 --debug-widget-demo=./seeker/bin/demo/widget_demo/1.0.0
 
 ### Service 示例
 
