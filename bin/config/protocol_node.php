@@ -52,7 +52,7 @@ return [
             'service' => 'Seeker\\Service\\Node\\Client:listens',
             'request' => 'Seeker\\Protocol\\Json',
             'response' => 'Seeker\\Protocol\\Base',
-            'authed' => Connection::AUTHED_COMMON
+            'authed' => Connection::AUTHED_SERVICE
         ]
     ],
     'remoteCalls' => [

@@ -8,7 +8,7 @@ return [
             'service' => 'User\\Service\\Common:login',
             'request' => 'Seeker\\Protocol\\Json',
             'response' => 'Seeker\\Protocol\\Base',
-            'authed' => Connection::AUTHED_COMMON
+            'authed' => Connection::AUTHED_NODE
         ],
     ]
 ];

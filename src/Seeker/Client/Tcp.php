@@ -3,14 +3,16 @@ namespace Seeker\Client;
 
 use Seeker\Standard\ConnectionInterface;
 use Swoole\Client;
+use Phalcon\Events\EventsAwareInterface;
 
-class TcpConnection implements ConnectionInterface
+class Tcp implements ConnectionInterface
 {
     protected $client = null;
     protected $host = '';
     protected $port = 0;
     protected $authed = 0;
-
+    public $_callbacks = [];
+    public $_lastCallback = 0; 
 
     public function __construct($host = '', $port = 0, $option = [])
     {
@@ -23,7 +25,6 @@ class TcpConnection implements ConnectionInterface
         $this->host = $host;
         $this->port = $port;
     }
-
     public function getHost()
     {
         return $this->host;

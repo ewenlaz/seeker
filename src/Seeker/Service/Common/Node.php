@@ -19,9 +19,13 @@ class Node extends Base
 
         if ($authKeys && isset($authKeys[$key])) {
             $this->connection->setAuthed($authKeys[$key]);
-            $this->connection->send($this->response);
+            \Console::debug('login success');
+            $this->response->sendTo($this->connection);
+
         } else {
-            $this->connection->send($this->response->setCode(Error::AUTH_ERROR));
+            \Console::debug('login fail:auth error');
+            $this->response->setCode(Error::AUTH_ERROR);
+            $this->response->sendTo($this->connection);
             $this->connection->close();
         }
     }

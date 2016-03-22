@@ -27,7 +27,6 @@ class Process implements WorkerInterface, InjectionAwareInterface
         //开始连接远程服务器。。。。
         $this->connection = new ConnectClient($params['host'], $params['port'], Setting::eof());
         $this->connection
-            ->setDispatcher($this->dispatcher)
             ->setNodeId($params['id'])
             ->setAuthKey($params['key'])
             ->connect();

@@ -15,7 +15,7 @@ class Process extends ServiceProcess
     public function sendTest()
     {
         $this->dispatcher->remoteCall('user.common.login')
-            ->then(function($connection, $response) {
+            ->then(function($response, $connection) {
                 \Console::debug('user.common.login code: ' . $response->getCode());
             })
             ->sendTo($this->connection);

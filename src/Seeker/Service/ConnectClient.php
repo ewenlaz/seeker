@@ -2,10 +2,11 @@
 
 namespace Seeker\Service;
 
-use Seeker\Client\TcpConnection;
+use Seeker\Client\Tcp as TcpConnection;
 use Seeker\Protocol\Json;
 use Seeker\Protocol\Base;
 use Seeker\Service\RemoteCall;
+use Seeker\Core\DI;
 
 class ConnectClient extends TcpConnection
 {
@@ -41,14 +42,14 @@ class ConnectClient extends TcpConnection
         //发送认证协议.
 
         $that = $this;
-        $this->dispatcher->remoteCall('common.node.login')
+        DI::get('dispatcher')->remoteCall('common.node.login')
             ->setToNode($this->nodeId)
             ->set('type', 'common')
             ->set('authKey', $this->authKey)
-            ->then(function($connection, $response) use ($that) {
+            ->then(function($response, $connection) use ($that) {
                 if (!$response->getCode()) {
                     \Console::debug('node connect success!---');
-                    $connection->setAuthed(static::AUTHED_COMMON);
+                    $connection->setAuthed(static::AUTHED_NODE);
                     //发送协议注册
                     $that->syncServiceListener();
                 } else {
@@ -63,16 +64,22 @@ class ConnectClient extends TcpConnection
 
         \Console::debug('start to sync service listens!');
         $services = [];
-        foreach ($this->dispatcher->getServiceListeners() as $listener) {
-            if (in_array($listener->getName(), $this->skipService)) {
+        foreach (DI::get('dispatcher')->getServiceAccepts() as $id => $accepts) {
+            if (in_array($accepts->name, $this->skipService)) {
                 continue;
             }
-            $services[] = $listener->getName() . '|' . $listener->getType() . '|' . $listener->getAuthed();
+            foreach ($accepts->queue as $queue) {
+                $services[] = $queue->getService() . '|0|' . $queue->requeireAuthed();
+            }
         }
 
-        $this->dispatcher->remoteCall('node.client.listens')
+        foreach (DI::get('dispatcher')->getServiceRemotes() as $id => $remote) {
+            $services[] = $remote->name . '|1|0';
+        }
+
+        DI::get('dispatcher')->remoteCall('node.client.listens')
             ->set($services)
-            ->then(function($connection, $response) {
+            ->then(function($response, $connection) {
                 \Console::debug(
                     'sync service listener: (code:%d)'
                     , $response->getCode()
@@ -86,14 +93,8 @@ class ConnectClient extends TcpConnection
 
     }
 
-    public function setDispatcher($dispatcher)
-    {
-        $this->dispatcher = $dispatcher;
-        return $this;
-    }
-
     public function onReceive($data)
     {
-        $this->dispatcher->dispatch($this, $data);
+        DI::get('dispatcher')->dispatch($this, $data);
     }
 }

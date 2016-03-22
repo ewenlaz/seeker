@@ -17,6 +17,7 @@ class Worker extends TcpWorker
         //启动。。注册协议监听。。
         \Console::debug('worker start....');
         $this->dispatcher = $this->getServer()->getDI()->get('dispatcher');
+        $this->dispatcher->startNode();
     }
 
     public function onReceive($id, $data)

@@ -1,11 +1,13 @@
 <?php
 namespace Seeker\Service;
 
+use Seeker\Standard\ConnectionInterface;
+
 class Listener
 {
     const EVENT_LISTEN  = 1;
     const EVENT_PRODUCT = 2;
-    const REMOTE_CALL   = 3;
+    const REMOTE   = 3;
     const ACCEPT       = 4;
 
     protected $name = '';
@@ -16,11 +18,13 @@ class Listener
     protected $process = [];
     protected $service = '';
     protected $isProxy = false;
+    protected $proxys = null;
 
     public function __construct($name = '', $type = self::ACCEPT)
     {
         $this->name = $name;
         $this->type = $type;
+        $this->proxys = new \SplObjectStorage;
     }
 
     public function getName()
@@ -76,6 +80,11 @@ class Listener
     public function checkAuth($auth)
     {
         return !$this->authed || $auth & $this->authed;
+    }
+
+    public function addProxy(ConnectionInterface $connection)
+    {
+
     }
 
     public function isProxy($val = null)

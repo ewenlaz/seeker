@@ -8,6 +8,8 @@ class Connection implements ConnectionInterface
     protected $id = 0;
     protected $worker = null;
     protected $authed = 0;
+    public $_callbacks = [];
+    public $_lastCallback = 0;
     
     public function __construct($id, $worker)
     {

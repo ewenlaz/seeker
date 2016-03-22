@@ -3,7 +3,7 @@
 namespace Seeker\Service\Common;
 
 use Seeker\Protocol\Base as ProtocolBase;
-
+use Seeker\Service\Dispatcher;
 
 class Base
 {
@@ -11,7 +11,7 @@ class Base
     protected $request = null;
     protected $response = null;
     protected $connection = null;
-    public function __construct($dispatcher, $connection, $request, $response)
+    public function __construct(Dispatcher $dispatcher, $connection, $request, $response)
     {
         $this->dispatcher = $dispatcher;
         $this->request = $request;

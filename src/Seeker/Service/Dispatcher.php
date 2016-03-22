@@ -5,79 +5,106 @@ use Seeker\Protocol\Base\Setting;
 use Seeker\Protocol\Base;
 use Seeker\Protocol\Error;
 use Seeker\Core\DI;
+use Seeker\Standard\ConnectionInterface;
+use Seeker\Service\Dispatcher\Adapter\Local;
+use Seeker\Service\Dispatcher\Adapter\Remote;
+use Seeker\Service\Dispatcher\AdapterInterface;
+use Swoole\Timer;
+
 class Dispatcher
 {   
-    protected $serviceListeners = [];
-    protected $proxyServiceListeners = [];
+
+    const DISPATCH_LOCAL = 1;
+    const DISPATCH_CONNECTION = 2;
+
+    protected $serviceAccepts = [];
+    protected $serviceRemotes = [];
+    protected $nodeId = 0;
+    protected $processId = 0;
+    protected $callbacks = null;
+    protected $isNode = false;
+
+    public function __construct($nodeId = 0, $processId = 0)
+    {
+        $this->nodeId = $nodeId;
+        $this->processId = $processId;
+        $this->_callbacks = new \SplPriorityQueue;
+    }
+
+    public function startNode()
+    {
+        $this->isNode = true;
+        Timer::tick(300, [$this, 'checkTimeout']);
+    }
+
+    public function checkTimeout()
+    {
+        foreach ($this->_callbacks as $callback) {
+
+        }
+    }
+
+    public function getNodeId()
+    {
+        return $this->nodeId;
+    }
+
+    public function getProcessId()
+    {
+        return $this->processId;
+    }
 
     public function listens($listens)
     {
         foreach ($listens as $service => $ctrl) {
-            $id = crc32($service);
-            if (isset($this->serviceListeners[$id])) {
-                continue;
-            }
-            $listener = new Listener($service, Listener::ACCEPT);
-            $listener->setRequest($ctrl['request']);
-            $listener->setResponse($ctrl['response']);
-            if (isset($ctrl['authed']) && $ctrl['authed']) {
-                $listener->setAuthed((int)$ctrl['authed']);
-            }
-            $listener->setService($ctrl['service']);
-            $this->pushListener($id, $listener);
+            $adapter = new Local($service, $ctrl);
+            $this->addAcceptAdapter($service, $adapter, true);
         }
     }
 
-    public function getServiceListeners()
+    public function getServiceAccepts()
     {
-        return $this->serviceListeners;
+        return $this->serviceAccepts;
     }
 
-    public function pushListener($id, Listener $listener)
+    public function getServiceRemotes()
     {
-        $this->serviceListeners[$id] = $listener;
-    }
-
-    public function getListener($service)
-    {
-        $id = crc32($service);
-        return $this->getListenerById($id);
-    }
-
-    public function getListenerById($id)
-    {
-        return isset($this->serviceListeners[$id]) ? $this->serviceListeners[$id] : null;
-    }
-
-    public function pushProxyListener($id, Listener $listener)
-    {
-        $this->proxyServiceListeners[$id] = $listener;
-    }
-
-
-    public function getProxyListener($service)
-    {
-        $id = crc32($service);
-        return $this->getProxyListenerById($id);
-    }
-
-    public function getProxyListenerById($id)
-    {
-        return isset($this->proxyServiceListeners[$id]) ? $this->proxyServiceListeners[$id] : null;
+        return $this->serviceRemotes;
     }
 
     public function remoteCalls($listens)
     {
         foreach ($listens as $service => $ctrl) {
-            $id = crc32($service);
-            if (isset($this->serviceListeners[$id])) {
-                continue;
-            }
+            $local = new Remote($service, $ctrl);
+            $this->addRemoteServiceCall($service, $local);
+        }
+    }
 
-            $listener = new Listener($service, Listener::REMOTE_CALL);
-            $listener->setRequest($ctrl['request']);
-            $listener->setResponse($ctrl['response']);
-            $this->pushListener($id, $listener);
+    public function addAcceptAdapter($service, AdapterInterface $adapter, $top = false)
+    {
+        $serviceId = crc32($service);
+        if (!isset($this->serviceAccepts[$serviceId])) {
+            $this->serviceAccepts[$serviceId] = new \StdClass;
+            $this->serviceAccepts[$serviceId]->queue = new \SplQueue;
+            $this->serviceAccepts[$serviceId]->name = $service;
+        }
+        if ($top) {
+            $this->serviceAccepts[$serviceId]->queue->unshift($adapter);
+        } else {
+            $this->serviceAccepts[$serviceId]->queue->push($adapter);
+        }
+    }
+
+    public function addRemoteServiceCall($service, $local = false)
+    {
+        $serviceId = crc32($service);
+        if (!isset($this->serviceRemotes[$serviceId])) {
+            $this->serviceRemotes[$serviceId] = new \StdClass;
+            $this->serviceRemotes[$serviceId]->name = $service;
+            $this->serviceRemotes[$serviceId]->local = $local;
+        }
+        if ($local) {
+            $this->serviceRemotes[$serviceId]->local = $local;
         }
     }
 
@@ -99,111 +126,89 @@ class Dispatcher
 
     public function remoteCall($service)
     {
-        $listener = $this->getListener($service);
-        if ($listener && $listener->getType() == Listener::REMOTE_CALL) {
-            $request = $listener->getRequest();
-            $request = new $request;
-            $request->setService($service);
-            $askId = DI::get('askId')->create();
-            $request->setAskId($askId);
-            $remoteCall = new RemoteCall($request);
-            
-            \Console::debug(
-                'REMOTE_CALL: to (service:%s, node:%d, process:%d, askId:%d)'
-                , $listener->getName()
-                , $request->getToNode()
-                , $request->getToProcess()
-                , $askId
-            );
+        //获取可用的来原。
+        $serviceId = crc32($service);
+        if (isset($this->serviceRemotes[$serviceId])) {
+            $listen = $this->serviceRemotes[$serviceId];
 
-            return $remoteCall;
+            if ($listen->local) {
+                $request = $listen->local->createRequest();
+                $request->setAskId(DI::get('askId')->create());
+                $request->setService($serviceId);
+                $request->setFromNode($this->nodeId);
+                $request->setFromProcess($this->processId);
+
+                return $request;
+            } else {
+                \Console::debug(
+                    'REMOTE_CALL: no found in local(service:%s)'
+                    , $service
+                );
+                throw new \Exception(sprintf('REMOTE_CALL: no found (service:%s)', $service), 1);
+            }
         } else {
             \Console::debug(
                 'REMOTE_CALL: no found (service:%s)'
                 , $service
             );
+            throw new \Exception(sprintf('REMOTE_CALL: no found (service:%s)', $service), 1);
         }
     }
 
-    public function dispatch($connection, $data)
+    public function registerOnBack($connection, $request)
     {
-        //开始解析协议
-        $header = Base::parseHeader($data);
+        $time = microtime(true);
+        $connection->_callbacks[$request->getAskId()] = [
+            'askTime' => $time,
+            'callback' => $request->getCallback(),
+            'isLocal' => true
+        ];
 
-        $listener = $this->getListenerById($header['service']);
-        $flag = $header['flag'];
+        $connection->_lastCallback = $time;
 
-        //查询是不是Proxy...
-        if (!$listener) {
-            $listener = $this->getProxyListenerById($header['service']);
+        if ($this->isNode) {
+            $this->_callbacks->insert($connection, 4000000000.0000 - $time);
         }
+    }
 
-        if ($listener && $flag & Base::PROTOCOL_IS_EVENT) {
+// //找到被监听的RemoteCall....
+//                     $response = $listener['response'];
+//                     $response = new $response();
+//                     $response->setHeaders($header);
+//                     $response->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
+//                     $response->parseBody();
+
+    public function onBack($connection, $header, $data) {
+        //查找回调。。
+        $serviceId = $header['service'];
+        if (isset($connection->_callbacks[$header['askId']])) {
+            $callback = $connection->_callbacks[$header['askId']];
+            unset($connection->_callbacks[$header['askId']]);
+            if ($callback['isLocal']) {
+                $local = $this->serviceRemotes[$serviceId]->local;
+                $response = $local->createResponse();
+                $response->setHeaders($header);
+                $response->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
+                $response->parseBody();
+                call_user_func_array($callback['callback'], [$response, $connection]);
+            } else {
+                call_user_func_array($callback['callback'], [$data, $connection]);
+            }
+        } else {
             \Console::debug(
-                'PROTOCOL_IS_EVENT: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                , $listener->getName()
+                'PROTOCOL_BACK_TO_FOUND: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                , $this->serviceRemotes[$service]->name
                 , $header['fromNode']
                 , $header['fromProcess']
                 , $header['askId']
             );
-        } elseif ($listener && $flag & Base::PROTOCOL_IS_BACK) {
+        }
+    }
 
-            if ($listener->isProxy()) {
-                \Console::debug(
-                    'PROTOCOL_PROXY_BACK: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                    , $listener->getName()
-                    , $header['fromNode']
-                    , $header['fromProcess']
-                    , $header['askId']
-                );
-            } else {
-                \Console::debug(
-                    'PROTOCOL_BACK: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                    , $listener->getName()
-                    , $header['fromNode']
-                    , $header['fromProcess']
-                    , $header['askId']
-                );
-                $response = $listener->getResponse();
-                $response = new $response;
-                $response->setHeaders($header);
-                $response->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
-                $response->parseBody();
-                return RemoteCall::onBack($this, $connection, $response);
-            }
-
-
-        } elseif ($listener && $listener->checkAuth($connection->getAuthed())) {
-            if ($listener->isProxy()) {
-                \Console::debug(
-                    'ACCEPT_PROXY: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                    , $listener->getName()
-                    , $header['fromNode']
-                    , $header['fromProcess']
-                    , $header['askId']
-                );
-            } else {
-                \Console::debug(
-                    'ACCEPT_SELF: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                    , $listener->getName()
-                    , $header['fromNode']
-                    , $header['fromProcess']
-                    , $header['askId']
-                );
-                //是发给自己的协议
-                list($service, $method) = explode(':', $listener->getService());
-                $request = $listener->getRequest();
-                $request = new $request;
-                $request->setHeaders($header);
-                $request->setBodyStream(substr($data, Setting::eof()['package_body_offset']));
-                $response = $listener->getResponse();
-                $response = new $response;
-                $respHeader = Base::headerToResponse($header);
-                $response->setHeaders($respHeader);
-                $service = new $service($this, $connection, $request, $response);
-                $ret = $service->$method();
-            }
-        } elseif ($listener) {
+    protected function dispatchLocolOnService($handler, $connection, $header, $body)
+    {
+        //见权。
+        if (!$handler->requeireAuthed() & $connection->getAuthed()) {
             $respHeader = Base::headerToResponse($header);
             $resp = new Base();
             $resp->setHeaders($respHeader);
@@ -211,32 +216,106 @@ class Dispatcher
             $connection->send($resp);
             \Console::debug(
                 'AUTH_NOT_ALLOW: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                , $listener->getName()
+                , $handler->getService()
                 , $header['fromNode']
                 , $header['fromProcess']
                 , $header['askId']
             );
-        } elseif ($flag & Base::PROTOCOL_IS_BACK) {
+        } elseif ($handler instanceof ConnectionInterface) {
+            $handler->send($data);
             \Console::debug(
-                'PROTOCOL_NOT_FOUND but back: receive from (service:%d, node:%d, process:%d, askId:%d)'
-                , $header['service']
+                'DISPATCH_REMOTE: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                , $handler->getService()
                 , $header['fromNode']
                 , $header['fromProcess']
                 , $header['askId']
             );
         } else {
-            $respHeader = Base::headerToResponse($header);
-            $resp = new Base();
-            $resp->setHeaders($respHeader);
-            $resp->setCode(Error::PROTOCOL_NOT_FOUND);
             \Console::debug(
-                'PROTOCOL_NOT_FOUND: receive from (service:%d, node:%d, process:%d, askId:%d)'
-                , $header['service']
+                'DISPATCH_LOCAL: receive from (service:%s, node:%d, process:%d, askId:%d)'
+                , $handler->getService()
                 , $header['fromNode']
                 , $header['fromProcess']
                 , $header['askId']
             );
-            $connection->send($resp);
+            $handler->dispatch($this, $connection, $header, $body);
+        }
+    }
+
+    public function dispatcherLocal($connection, $header, $data)
+    {
+        $serviceId = $header['service'];
+        $listen = $this->serviceAccepts[$serviceId];
+        $body = substr($data, Setting::eof()['package_body_offset']);
+        if ($header['flag'] & Base::PROTOCOL_IS_BROADCAST) {
+            foreach ($listen as $handler) {
+                $this->dispatchLocolOnService($handler, $connection, $header, $body);
+            }
+        } else {
+            $handler = $listen->queue->shift();//队头出。
+            $listen->queue->push($handler);//队尾进。
+            $this->dispatchLocolOnService($handler, $connection, $header, $body);
+        }
+    }
+
+    public function dispatchHarbor($connection, $header, $data)
+    {
+        //选择一个连接进行发送。。。
+        $serviceId = $header['service'];
+        $listen = $this->serviceRemotes[$serviceId];
+        \Console::debug(
+            'PROTOCOL_FORWARD_TO_HARBOR: receive from (service:%d, node:%d, process:%d, askId:%d)'
+            , $header['service']
+            , $header['fromNode']
+            , $header['fromProcess']
+            , $header['askId']
+        );
+        //广播或是单个。。。
+    }
+
+    public function dispatch($connection, $data)
+    {
+        //开始解析协议
+        $header = Base::parseHeader($data);
+        $type = $connection->getAuthed();
+        $serviceId = $header['service'];
+        $flag = $header['flag'];
+
+        if ($flag & Base::PROTOCOL_IS_BACK) {
+            //返回的协议，一定要标明Node. Service.
+            if (isset($this->serviceRemotes[$serviceId])) {
+                $this->onBack($connection, $header, $data);
+            } else {
+                \Console::debug(
+                    'BACK_UNDEFINED: receive from (service:%d, node:%d, process:%d, askId:%d)'
+                    , $header['service']
+                    , $header['fromNode']
+                    , $header['fromProcess']
+                    , $header['askId']
+                );
+            }
+        } else {
+            //print_r($this->serviceAccepts);
+            if (isset($this->serviceAccepts[$serviceId])) {
+                //当前Node存在的
+                $this->dispatcherLocal($connection, $header, $data);
+            } elseif (isset($this->serviceRemotes[$serviceId])) {
+                //转给港口服务
+                $this->dispatchHarbor($connection, $header, $data);
+            } else {
+                $respHeader = Base::headerToResponse($header);
+                $resp = new Base();
+                $resp->setHeaders($respHeader);
+                $resp->setCode(Error::PROTOCOL_NOT_FOUND);
+                \Console::debug(
+                    'PROTOCOL_NOT_FOUND: receive from (service:%d, node:%d, process:%d, askId:%d)'
+                    , $header['service']
+                    , $header['fromNode']
+                    , $header['fromProcess']
+                    , $header['askId']
+                );
+                $connection->send($resp);
+            }
         }
     }
 }

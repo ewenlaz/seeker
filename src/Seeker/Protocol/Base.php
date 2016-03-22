@@ -3,13 +3,15 @@
 namespace Seeker\Protocol;
 
 use Seeker\Standard\ConnectionInterface;
+use Seeker\Core\DI;
 
 class Base
 {
-
-    const PROTOCOL_IS_EVENT = 4;
-    const PROTOCOL_IS_BACK = 1;
-    const PROTOCOL_MUST_BACK = 2;
+    const PROTOCOL_IS_BACK = 1; //是否是返回
+    const PROTOCOL_MUST_BACK = 2; //一定要返回
+    const PROTOCOL_IS_EVENT = 4; //是否是事件
+    const PROTOCOL_IS_BROADCAST = 8; //广播
+    const PROTOCOL_IS_REMOTE = 16;
 
     protected $header = [
         'len' => 0,
@@ -25,6 +27,7 @@ class Base
 
     protected $data = null;
     protected $streamBody = '';
+    protected $_callback = null;
 
     public function setHeaders($header)
     {
@@ -168,8 +171,23 @@ class Base
         return $this->getStream();
     }
 
+    public function then($callback)
+    {
+        $this->_callback = $callback;
+        return $this;
+    }
+
+    public function getCallback()
+    {
+        return $this->_callback;
+    }
+
+
     public function sendTo(ConnectionInterface $connection)
     {
+        if ($this->_callback) {
+            DI::get('dispatcher')->registerOnBack($connection, $this);
+        }
         return $connection->send($this);
     }
 
