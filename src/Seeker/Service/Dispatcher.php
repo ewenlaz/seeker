@@ -155,13 +155,13 @@ class Dispatcher
         }
     }
 
-    public function registerOnBack($connection, $request)
+    public function registerOnBack($connection, $request, $callbackLocal = true)
     {
         $time = microtime(true);
         $connection->_callbacks[$request->getAskId()] = [
             'askTime' => $time,
             'callback' => $request->getCallback(),
-            'isLocal' => true
+            'isLocal' => $callbackLocal
         ];
 
         $connection->_lastCallback = $time;
@@ -197,7 +197,7 @@ class Dispatcher
         } else {
             \Console::debug(
                 'PROTOCOL_BACK_TO_FOUND: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                , $this->serviceRemotes[$service]->name
+                , $this->serviceRemotes[$serviceId]->name
                 , $header['fromNode']
                 , $header['fromProcess']
                 , $header['askId']
@@ -221,16 +221,7 @@ class Dispatcher
                 , $header['fromProcess']
                 , $header['askId']
             );
-        } elseif ($handler instanceof ConnectionInterface) {
-            $handler->send($data);
-            \Console::debug(
-                'DISPATCH_REMOTE: receive from (service:%s, node:%d, process:%d, askId:%d)'
-                , $handler->getService()
-                , $header['fromNode']
-                , $header['fromProcess']
-                , $header['askId']
-            );
-        } else {
+        } else{
             \Console::debug(
                 'DISPATCH_LOCAL: receive from (service:%s, node:%d, process:%d, askId:%d)'
                 , $handler->getService()
@@ -283,6 +274,15 @@ class Dispatcher
 
         if ($flag & Base::PROTOCOL_IS_BACK) {
             //返回的协议，一定要标明Node. Service.
+
+            \Console::debug(
+                    'BACK_UNDEFINED: receive from (service:%d, node:%d, process:%d, askId:%d)'
+                    , $header['service']
+                    , $header['fromNode']
+                    , $header['fromProcess']
+                    , $header['askId']
+                );
+
             if (isset($this->serviceRemotes[$serviceId])) {
                 $this->onBack($connection, $header, $data);
             } else {

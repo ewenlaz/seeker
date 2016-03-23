@@ -68,6 +68,11 @@ class Local implements AdapterInterface
         $response = new $response;
         $respHeader = Base::headerToResponse($header);
         $response->setHeaders($respHeader);
+
+        if (!class_exists($service)) {
+            throw new \Exception('service class undefined:'. $service, 1);
+        }
+        
         $service = new $service($dispatch, $connection, $request, $response);
 
         if (!method_exists($service, $method)) {

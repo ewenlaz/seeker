@@ -59,16 +59,16 @@ if (file_exists($keyFile)) {
     $master = $random->hex(16);//Master. 连接ＫＥＹ。
     Console::debug('master key:' . $master);
     $harbor = $random->hex(16);
-    Console::debug('harbor key:' . $master);
+    Console::debug('harbor key:' . $harbor);
     $tool   = $random->hex(16);
-    Console::debug('tool key:' . $master);
-    $common   = $random->hex(16);
-    Console::debug('common key:' . $master);
+    Console::debug('tool key:' . $tool);
+    $service   = $random->hex(16);
+    Console::debug('service key:' . $service);
     $keys = [
         $master => ConnectionInterface::AUTHED_MASTER,
-        $harbor => ConnectionInterface::AUTHED_HARBOR,
+        $harbor => ConnectionInterface::AUTHED_HARBOR | ConnectionInterface::AUTHED_SERVICE,
         $tool => ConnectionInterface::AUTHED_TOOL,
-        $common => ConnectionInterface::AUTHED_COMMON,
+        $service => ConnectionInterface::AUTHED_SERVICE,
     ];
 
     file_put_contents($keyFile, json_encode($keys));

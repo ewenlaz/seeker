@@ -28,6 +28,7 @@ class Base
     protected $data = null;
     protected $streamBody = '';
     protected $_callback = null;
+    protected $_callbaclLocal = true;
 
     public function setHeaders($header)
     {
@@ -171,9 +172,10 @@ class Base
         return $this->getStream();
     }
 
-    public function then($callback)
+    public function then($callback, $_callbaclLocal = true)
     {
         $this->_callback = $callback;
+        $this->_callbaclLocal = $_callbaclLocal;
         return $this;
     }
 
@@ -186,7 +188,7 @@ class Base
     public function sendTo(ConnectionInterface $connection)
     {
         if ($this->_callback) {
-            DI::get('dispatcher')->registerOnBack($connection, $this);
+            DI::get('dispatcher')->registerOnBack($connection, $this, $this->_callbaclLocal);
         }
         return $connection->send($this);
     }

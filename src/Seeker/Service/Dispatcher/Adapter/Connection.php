@@ -5,8 +5,9 @@ use Seeker\Service\Dispatcher\AdapterInterface;
 use Seeker\Standard\ConnectionInterface;
 use Seeker\Server\Connection as ServerConnection;
 use Seeker\Service\Dispatcher;
+use Seeker\Protocol\Base;
 
-class Connection extends ServerConnection implements AdapterInterface
+class Connection implements AdapterInterface
 {
     protected $serviceName = '';
     protected $connection = null;
@@ -24,11 +25,17 @@ class Connection extends ServerConnection implements AdapterInterface
     
     public function requeireAuthed()
     {
-        return $this->authed;
+        return $this->connection->getAuthed();
     }
 
-    public function dispatch(Dispatcher $dispatch, ConnectionInterface $connection, $header, $data)
+    public function dispatch(Dispatcher $dispatch, ConnectionInterface $connection, $header, $body)
     {
-        $this->connection->send($data);
+        $req = new Base();
+        $req->setHeaders($header);
+        $req->setBodyStream($body);
+        $req->then(function($data) use ($connection) {
+            $connection->send($data);
+        }, false);
+        $req->sendTo($this->connection);
     }
 }

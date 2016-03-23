@@ -49,7 +49,7 @@ class ConnectClient extends TcpConnection
             ->then(function($response, $connection) use ($that) {
                 if (!$response->getCode()) {
                     \Console::debug('node connect success!---');
-                    $connection->setAuthed(static::AUTHED_NODE);
+                    $connection->setAuthed(static::AUTHED_SERVICE);
                     //发送协议注册
                     $that->syncServiceListener();
                 } else {
@@ -68,7 +68,10 @@ class ConnectClient extends TcpConnection
             if (in_array($accepts->name, $this->skipService)) {
                 continue;
             }
+            print_r($accepts->queue);
+
             foreach ($accepts->queue as $queue) {
+                var_dump($queue->requeireAuthed());
                 $services[] = $queue->getService() . '|0|' . $queue->requeireAuthed();
             }
         }

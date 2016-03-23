@@ -3,11 +3,11 @@
 use Seeker\Service\Process;
 
 $di->get('loader')->registerNamespaces([
- 'UserService' => __DIR__ . '/src/'
+ 'User' => __DIR__ . '/src/'
 ], true);
 
 Console::debug('user demo..注册完成。。。。');
 
 $di->set('service_process', function() {
-	return new Process;
+    return new Process;
 });

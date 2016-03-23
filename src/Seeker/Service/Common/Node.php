@@ -5,6 +5,8 @@ namespace Seeker\Service\Common;
 use Seeker\Sharded;
 use Seeker\Protocol\Error;
 use Seeker\Core\DI;
+use Seeker\Standard\ConnectionInterface;
+
 class Node extends Base
 {
     //节点认证
@@ -18,6 +20,16 @@ class Node extends Base
         $authKeys = DI::get('auth_keys');
 
         if ($authKeys && isset($authKeys[$key])) {
+
+            $authed = $authKeys[$key];
+            if ($authed & ConnectionInterface::AUTHED_HARBOR) {
+                $this->dispatcher->registerHarbor($this->connection);
+            }
+
+            if ($authed & ConnectionInterface::AUTHED_MASTER) {
+                $this->dispatcher->registerMaster($this->connection);
+            }
+
             $this->connection->setAuthed($authKeys[$key]);
             \Console::debug('login success');
             $this->response->sendTo($this->connection);
